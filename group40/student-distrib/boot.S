@@ -24,8 +24,8 @@ _start:
 	jmp     continue
 
 continue:
-	# Load the GDT
-
+	# Load the GDT			added line below to load gdt
+	lgdt	gdt_desc
 	# Load CS with the new descriptor value
 	ljmp    $KERNEL_CS, $keep_going
 
@@ -54,4 +54,3 @@ keep_going:
 halt:
 	hlt
 	jmp     halt
-
