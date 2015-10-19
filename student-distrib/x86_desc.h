@@ -1,4 +1,4 @@
-/* x86_desc.h - Defines for various x86 descriptors, descriptor tables, 
+/* x86_desc.h - Defines for various x86 descriptors, descriptor tables,
  * and selectors
  * vim:ts=4 noexpandtab
  */
@@ -35,7 +35,8 @@ typedef struct x86_desc {
 /* This is a segment descriptor.  It goes in the GDT. */
 typedef struct seg_desc {
 	union {
-		uint32_t val;
+		uint32_t val[2];
+		//changed from uint32_t piazza.com/class/idm4wvfmtx5qc?cid=733
 		struct {
 			uint16_t seg_lim_15_00;
 			uint16_t base_15_00;
@@ -128,20 +129,20 @@ extern tss_t tss;
 #define SET_LDT_PARAMS(str, addr, lim) \
 do { \
 	str.base_31_24 = ((uint32_t)(addr) & 0xFF000000) >> 24; \
-		str.base_23_16 = ((uint32_t)(addr) & 0x00FF0000) >> 16; \
-		str.base_15_00 = (uint32_t)(addr) & 0x0000FFFF; \
-		str.seg_lim_19_16 = ((lim) & 0x000F0000) >> 16; \
-		str.seg_lim_15_00 = (lim) & 0x0000FFFF; \
+	str.base_23_16 = ((uint32_t)(addr) & 0x00FF0000) >> 16; \
+	str.base_15_00 = (uint32_t)(addr) & 0x0000FFFF; \
+	str.seg_lim_19_16 = ((lim) & 0x000F0000) >> 16; \
+	str.seg_lim_15_00 = (lim) & 0x0000FFFF; \
 } while(0)
 
 /* Sets runtime parameters for the TSS */
 #define SET_TSS_PARAMS(str, addr, lim) \
 do { \
 	str.base_31_24 = ((uint32_t)(addr) & 0xFF000000) >> 24; \
-		str.base_23_16 = ((uint32_t)(addr) & 0x00FF0000) >> 16; \
-		str.base_15_00 = (uint32_t)(addr) & 0x0000FFFF; \
-		str.seg_lim_19_16 = ((lim) & 0x000F0000) >> 16; \
-		str.seg_lim_15_00 = (lim) & 0x0000FFFF; \
+	str.base_23_16 = ((uint32_t)(addr) & 0x00FF0000) >> 16; \
+	str.base_15_00 = (uint32_t)(addr) & 0x0000FFFF; \
+	str.seg_lim_19_16 = ((lim) & 0x000F0000) >> 16; \
+	str.seg_lim_15_00 = (lim) & 0x0000FFFF; \
 } while(0)
 
 /* An interrupt descriptor entry (goes into the IDT) */
