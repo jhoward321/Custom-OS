@@ -144,6 +144,60 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	void handler0(){
+		printf("Divide by zero you dumbass");
+	}
+	lidt(idt_desc_ptr); //load interrupt descriptor table
+	//setup IDT
+	//exception calls
+	SET_IDT_ENTRY(idt[0], (uint32_t) handler0);
+	// SET_IDT_ENTRY(idt[1], (uint32_t) handler1);
+	// SET_IDT_ENTRY(idt[2], (uint32_t) handler2);
+	// SET_IDT_ENTRY(idt[3], (uint32_t) handler3);
+	// SET_IDT_ENTRY(idt[4], (uint32_t) handler4);
+	// SET_IDT_ENTRY(idt[5], (uint32_t) handler5);
+	// SET_IDT_ENTRY(idt[6], (uint32_t) handler6);
+	// SET_IDT_ENTRY(idt[7], (uint32_t) handler7);
+	// SET_IDT_ENTRY(idt[8], (uint32_t) handler8);
+	// SET_IDT_ENTRY(idt[9], (uint32_t) handler9);
+	// SET_IDT_ENTRY(idt[10], (uint32_t) handler10);
+	// SET_IDT_ENTRY(idt[11], (uint32_t) handler11);
+	// SET_IDT_ENTRY(idt[12], (uint32_t) handler12);
+	// SET_IDT_ENTRY(idt[13], (uint32_t) handler13);
+	// SET_IDT_ENTRY(idt[14], (uint32_t) handler14);
+	// SET_IDT_ENTRY(idt[15], (uint32_t) handler15);
+	// SET_IDT_ENTRY(idt[16], (uint32_t) handler16);
+	// SET_IDT_ENTRY(idt[17], (uint32_t) handler17);
+	// SET_IDT_ENTRY(idt[18], (uint32_t) handler18);
+	// SET_IDT_ENTRY(idt[19], (uint32_t) handler19);
+	// SET_IDT_ENTRY(idt[20], (uint32_t) handler20);
+	// SET_IDT_ENTRY(idt[21], (uint32_t) handler21);
+	// SET_IDT_ENTRY(idt[22], (uint32_t) handler22);
+	// SET_IDT_ENTRY(idt[23], (uint32_t) handler23);
+	// SET_IDT_ENTRY(idt[24], (uint32_t) handler24);
+	// SET_IDT_ENTRY(idt[25], (uint32_t) handler25);
+	// SET_IDT_ENTRY(idt[26], (uint32_t) handler26);
+	// SET_IDT_ENTRY(idt[27], (uint32_t) handler27);
+	// SET_IDT_ENTRY(idt[28], (uint32_t) handler28);
+	// SET_IDT_ENTRY(idt[29], (uint32_t) handler29);
+	// SET_IDT_ENTRY(idt[30], (uint32_t) handler30);
+	// SET_IDT_ENTRY(idt[31], (uint32_t) handler31);
+	int i;
+	for(i = 0; i < 1; i++){
+		idt[i].seg_selector = KERNEL_CS;
+		idt[i].reserved4 = 0x00;
+		idt[i].reserved3 = 0;
+		idt[i].reserved2 = 1;
+		idt[i].reserved1 = 1;
+		idt[i].size = 1;//side is D, 1 = 32 bits
+		idt[i].reserved0 = 0;
+		idt[i].dpl = 0;
+		idt[i].present = 1;
+	}
+	//set system call
+	//idt[128].seg_selector = 
+	i /= 0;
+
 	/* Init the PIC */
 	i8259_init();
 
