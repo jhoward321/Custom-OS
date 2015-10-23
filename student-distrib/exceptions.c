@@ -1,6 +1,6 @@
 #include "exceptions.h"
-
-
+#include "rtc.h" //needed for rtc handler
+#include "i8259.h"
 
 
 /*
@@ -17,6 +17,7 @@ FncPtr functionFactory(int n) {
 */
 void set_exeptions(){
 	//20 interrupts defined by intel
+	//32 reserved by intel but only 20 are defined
 	SET_IDT_ENTRY(idt[0], ex_0);
 	SET_IDT_ENTRY(idt[1], ex_1);
 	SET_IDT_ENTRY(idt[2], ex_2);
@@ -38,6 +39,7 @@ void set_exeptions(){
 	SET_IDT_ENTRY(idt[18], ex_18);
 	SET_IDT_ENTRY(idt[19], ex_19);
 
+
 	SET_IDT_ENTRY(idt[33], ex_33);	//keyboard
 	SET_IDT_ENTRY(idt[40], ex_40);	//RTC
 
@@ -51,7 +53,7 @@ void set_exeptions(){
 	}
 	set_interrupt_gate(33);
 	set_interrupt_gate(40);
-	set_interrupt_gate(128);
+	set_interrupt_gate(128); //this needs a different dpl value since needs to be accessed by user space
 }
 
 void set_interrupt_gate(uint8_t i){
@@ -62,7 +64,10 @@ void set_interrupt_gate(uint8_t i){
 	idt[i].reserved1 	= 1;
 	idt[i].size 		= 1;	//side is D, 1 = 32 bits
 	idt[i].reserved0	= 0;
-	idt[i].dpl 		= 0;
+	if(i == 128)
+		idt[i].dpl 		= 3;
+	else
+		idt[i].dpl 		= 0;
 	idt[i].present 		= 1;
 }
 
@@ -184,7 +189,18 @@ void ex_33(){	//keyboard
 
 }
 
+
+//referenced code from this site
+//http://wiki.osdev.org/RTC#Interrupts_and_Register_C
 void ex_40(){	//RTC
+	//have to read register C to allow interrupt to happen again
+	outb(RTC_REG_C, RTC_CMD);
+	//dont care about contents
+	inb(RTC_MEM);
+
+	test_interrupts(); //for checkpoint 1 - in lib.c
+
+	send_eoi(8); //interrupt is over
 
 }
 
