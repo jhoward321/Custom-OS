@@ -1,7 +1,7 @@
 #include "exceptions.h"
 #include "rtc.h" //needed for rtc handler
 #include "i8259.h"
-
+#include "keyboard.h"
 
 /*
 example from here https://stackoverflow.com/questions/15644088/declaration-of-function-returning-a-function-pointer
@@ -40,7 +40,7 @@ void set_exeptions(){
 	SET_IDT_ENTRY(idt[19], ex_19);
 
 
-	SET_IDT_ENTRY(idt[33], ex_33);	//keyboard
+	SET_IDT_ENTRY(idt[33], keyboard_handler);	//keyboard - moved handler to keyboard.c
 	SET_IDT_ENTRY(idt[40], ex_40);	//RTC
 
 
@@ -185,9 +185,8 @@ void ex_19(){
 	ex_halt();
 }
 
-void ex_33(){	//keyboard
-
-}
+//void ex_33(){	//keyboard - handler moved to keyboard.c
+//}
 
 
 //referenced code from this site
