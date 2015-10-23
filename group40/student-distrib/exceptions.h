@@ -33,9 +33,9 @@ void ex_17();
 void ex_18();
 void ex_19();
 
-void ex_33();
-void ex_40();
+void ex_33(); //keyboard
+void ex_40(); //rtc
 
-void ex_128();
+void ex_128(); //rtc
 
 #endif
