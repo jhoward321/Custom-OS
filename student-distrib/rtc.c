@@ -24,7 +24,7 @@ void rtc_init(void){
 
 	//now need to set frequency
 
-	//rate buts be above 2 and not over 15
+	//rate must be above 2 and not over 15
 	int rate = 15;
 	rate &= 0x0F;
  	// select register A for reading
