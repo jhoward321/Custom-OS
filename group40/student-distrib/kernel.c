@@ -10,6 +10,7 @@
 #include "exceptions.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "paging.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -21,6 +22,9 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
+	paging_init();
+
+
 
 	/* Clear the screen. */
 	clear();
@@ -171,8 +175,15 @@ entry (unsigned long magic, unsigned long addr)
 	clear();
 	printf("Enabling Interrupts\n");
 
+
+
+
 	keyboard_init();
+	//int* ptr = NULL;
+	//int i = *ptr;
+
 	/* Execute the first program (`shell') ... */
+	while(1){}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

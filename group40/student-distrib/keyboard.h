@@ -7,7 +7,7 @@
 
 void keyboard_init(void); //not sure if this is even needed
 
-void keyboard_handler(void); //exception handler for keyboard
+extern void keyboard_handler(void); //exception handler for keyboard
 
 
 #endif /* KEYBOARD_H */
