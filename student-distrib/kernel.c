@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "exceptions.h"
 #include "rtc.h"
+#include "keyboard.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -146,9 +147,10 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
-	lidt(idt_desc_ptr); 		//load interrupt descriptor table
-	set_exeptions();		//set up known exceptions in table
+	clear();			//clear the screen
 
+	set_exeptions();		//set up known exceptions in table
+	lidt(idt_desc_ptr); 		//load interrupt descriptor table
 	//int i =1/0;			//use this line to test divide by zero
 
 	/* Init the PIC */
@@ -164,9 +166,12 @@ entry (unsigned long magic, unsigned long addr)
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	/*printf("Enabling Interrupts\n");
-	sti();*/
+	sti();
 
+	clear();
+	printf("Enabling Interrupts\n");
+
+	keyboard_init();
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */
