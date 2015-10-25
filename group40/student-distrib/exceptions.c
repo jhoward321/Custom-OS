@@ -2,22 +2,13 @@
 #include "rtc.h" //needed for rtc handler
 #include "i8259.h"
 #include "keyboard.h"
+#include "lib.h"
 
-/*
-example from here https://stackoverflow.com/questions/15644088/declaration-of-function-returning-a-function-pointer
-
-typedef int (*FncPtr)(int,int);
-
-FncPtr functionFactory(int n) {
-    printf("Got parameter %d", n);
-    FncPtr functionPtr = &addInt;
-    return functionPtr;
-}
-
-*/
 void set_exeptions(){
 	//20 interrupts defined by intel
 	//32 reserved by intel but only 20 are defined
+
+	disable_irq(1);		//disable keyboard during first 19 exceptions
 	SET_IDT_ENTRY(idt[0], ex_0);
 	SET_IDT_ENTRY(idt[1], ex_1);
 	SET_IDT_ENTRY(idt[2], ex_2);
@@ -38,8 +29,9 @@ void set_exeptions(){
 	SET_IDT_ENTRY(idt[17], ex_17);
 	SET_IDT_ENTRY(idt[18], ex_18);
 	SET_IDT_ENTRY(idt[19], ex_19);
+	enable_irq(1);			//re-enable keyboard
 
-
+	//SET_IDT_ENTRY(idt[33], ex_33);
 	SET_IDT_ENTRY(idt[33], keyboard_handler);	//keyboard - moved handler to keyboard.c
 	SET_IDT_ENTRY(idt[40], ex_40);	//RTC
 
@@ -65,129 +57,131 @@ void set_interrupt_gate(uint8_t i){
 	idt[i].size 		= 1;	//side is D, 1 = 32 bits
 	idt[i].reserved0	= 0;
 	if(i == 128)
-		idt[i].dpl 		= 3;
+		idt[i].dpl 	= 3;
 	else
-		idt[i].dpl 		= 0;
+		idt[i].dpl 	= 0;
 	idt[i].present 		= 1;
 }
 
 
 void ex_error(){
 	clear();			//clear the screen
-	printf("Error: ");		//let user know there is an error
+	printf("Error #");		//let user know there is an error
 
 }
 void ex_halt(){				//loop on halt
-	asm volatile(".1: hlt; jmp .1;");
-
+	while(1){}
 }
 
 
 
 void ex_0(){
 	ex_error();
-	printf("Divide by zero\n");
+	printf("0: Divide by zero\n");
 	ex_halt();
 }
 void ex_1(){
 	ex_error();
-	printf("Debug\n");
+	printf("1: Debug\n");
 	ex_halt();
 }
 void ex_2(){
 	ex_error();
-	printf("Nonmaskable Interrupts (NMI)\n");
+	printf("2: Nonmaskable Interrupts (NMI)\n");
 	ex_halt();
 }
 void ex_3(){
 	ex_error();
-	printf("Breakpoint\n");
+	printf("3: Breakpoint\n");
 	ex_halt();
 }
 void ex_4(){
 	ex_error();
-	printf("Overflow\n");
+	printf("4: Overflow\n");
 	ex_halt();
 }
 void ex_5(){
 	ex_error();
-	printf("Bounds check\n");
+	printf("5: Bounds check\n");
 	ex_halt();
 }
 void ex_6(){
 	ex_error();
-	printf("Invalid opcode\n");
+	printf("6: Invalid opcode\n");
 	ex_halt();
 }
 void ex_7(){
 	ex_error();
-	printf("Device not available\n");
+	printf("7: Device not available\n");
 	ex_halt();
 }
 void ex_8(){
 	ex_error();
-	printf("Double fault\n");
+	printf("8: Double fault\n");
 	ex_halt();
 }
 void ex_9(){
 	ex_error();
-	printf("Coprocessor segment overrun\n");
+	printf("9: Coprocessor segment overrun\n");
 	ex_halt();
 }
 void ex_10(){
 	ex_error();
-	printf("Invalid TSS\n");
+	printf("10: Invalid TSS\n");
 	ex_halt();
 }
 void ex_11(){
 	ex_error();
-	printf("Segment not present\n");
+	printf("11: Segment not present\n");
 	ex_halt();
 }
 void ex_12(){
 	ex_error();
-	printf("Stack segment\n");
+	printf("12: Stack segment\n");
 	ex_halt();
 }
 void ex_13(){
 	ex_error();
-	printf("General protection\n");
+	printf("13: General protection\n");
 	ex_halt();
 }
 void ex_14(){
 	ex_error();
-	printf("Page Fault\n");
+	printf("14: Page Fault\n");
 	ex_halt();
 }
 void ex_15(){
 	ex_error();
-	printf("reserved?\n");
+	printf("15: reserved?\n");
 	ex_halt();
 }
 void ex_16(){
 	ex_error();
-	printf("Floating-point error\n");
+	printf("16: Floating-point error\n");
 	ex_halt();
 }
 void ex_17(){
 	ex_error();
-	printf("Alignment check\n");
+	printf("17: Alignment check\n");
 	ex_halt();
 }
 void ex_18(){
 	ex_error();
-	printf("Machine check\n");
+	printf("18: Machine check\n");
 	ex_halt();
 }
 void ex_19(){
 	ex_error();
-	printf("SIMD floating point\n");
+	printf("19: SIMD floating point\n");
 	ex_halt();
 }
 
-//void ex_33(){	//keyboard - handler moved to keyboard.c
-//}
-
+/*
+void ex_33(){	//keyboard - handler moved to keyboard.c
+	clear();
+	printf("keyboard handler called\n");
+}
+*/
 
 //referenced code from this site
 //http://wiki.osdev.org/RTC#Interrupts_and_Register_C

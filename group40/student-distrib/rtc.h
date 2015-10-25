@@ -1,6 +1,7 @@
 #ifndef RTC_H
 #define RTC_H
 
+
 //ports used
 #define RTC_REG_B 0x8B //address on chip is 0x0B but its on irq8
 #define RTC_CMD 0x70

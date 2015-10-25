@@ -41,19 +41,19 @@ void keyboard_init(void){
 
 //https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 //http://www.asciitable.com/
-unsigned char KBkeys[MAXBUFLEN] = 
+unsigned char KBkeys[MAXBUFLEN] =
 {
 	//00 and 01 are error and ESC
 	0, //error code
 	27, //ESC
-	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', //0-9, -, = 
+	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', //0-9, -, =
 	'\b',//backspace
 	'\t',//tab - index 15
 	'q','w','e','r','t','y','u','i','o','p','[',']', //index 27
 	'\n', //enter key (index 1c = 28)
 	0, //left control but dont care about for checkpoint 1
 	'a','s','d','f','g','h','j','k','l',';','\'', //index 40
-	'`', 
+	'`',
 	0, //left shift we dont care about for checkpoint 1
 	'\'','z','x','c','v','b','n','m',',','.','/', //index 54
 	0, //right shift
@@ -70,14 +70,15 @@ unsigned char KBkeys[MAXBUFLEN] =
 	0,0, //insert, delete
 	0,0,0, //dont usually occur but reference site for explanation - can leave as 0 most likely
 	0,0, //f11, f12 index 89
-	0, //rest are all 0	
+	0, //rest are all 0
 };
 
 //for checkpoint 1 keyboard handler must echo correct character to screen, doesnt matter where it appears
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 void keyboard_handler(void){
 	unsigned char scancode, status, keycode;
-
+	
+	printf("keyboard handler called\n");
 	//read keyboard status
 	//status = inb(KB_STATUS);
 	scancode = inb(KB_PORT);
