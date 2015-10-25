@@ -77,7 +77,7 @@ unsigned char KBkeys[MAXBUFLEN] =
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 void keyboard_handler(void){
 	unsigned char scancode, status, keycode;
-	
+	clear();
 	printf("keyboard handler called\n");
 	//read keyboard status
 	//status = inb(KB_STATUS);

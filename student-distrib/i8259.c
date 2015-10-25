@@ -35,8 +35,8 @@ i8259_init(void)
 	outb(ICW4, SLAVE_8259_DATA);
 
 	//remask lines
-	//outb(INIT_MASK, MASTER_8259_DATA);
-	//outb(INIT_MASK, MASTER_8259_DATA);
+	outb(INIT_MASK, MASTER_8259_DATA);
+	outb(INIT_MASK, MASTER_8259_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
