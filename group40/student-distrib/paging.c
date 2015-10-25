@@ -12,30 +12,39 @@
 //31       22|21                 0
 //directory              |offset to physical address
 
-uint32_t page_directory[1024] __attribute__((aligned(4096)));
-uint32_t first_page_table[1024] __attribute__((aligned(4096)));
+
+//magic numbers
+#define NUM_INDEXES 1024
+#define ALIGN_SIZE 4096
+#define NOT_PRESENT 0x00000002
+#define PRESENT 0x00000003
+#define KERNEL_VIRTADR 0x400000 //(4MB)
+
+
+uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
+uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 
 //enables paging
 void paging_init(){
 
-	//initialize all the pages in the directory
+	//initialize the directory to empty
 	uint32_t i;
-	for(i = 0; i < 1024; i++)
+	for(i = 0; i < NUM_INDEXES; i++)
 	{
 	    // This sets the following flags to the pages:
 	    //   Supervisor: Only kernel-mode can access them
 	    //   Write Enabled: It can be both read from and written to
 	    //   Not Present: The page table is not present
-	    page_directory[i] = 0x00000002;
-	    first_page_table[i] = (i * 0x1000) | 3;
+	    page_directory[i] = NOT_PRESENT;
+	    first_page_table[i] = (i * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
+	    //first_page_table[i] = (i * 0x1000) | 3; //x1000 is just 4096
 	}
 
 
 
-
-
-	page_directory[0] = ((uint32_t)first_page_table) | 3;
-
+	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
+	//directory 1 is kernel
+	page_directory[1] = KERNEL_VIRTADR | (0x80 | PRESENT); //map kernel as present
 
 
 	//the assembly below loads the page directory
@@ -43,18 +52,19 @@ void paging_init(){
 	//the next 3 instructions set bits 4&7 of cr4 which allows pages to be
 	//4MB(pse) and address translations may be shared between address spaces (PGE)
 	//the finally the last 3 instructions set bit 31 of cr0 which enables paging
-	asm volatile ("				  \
+
+	//the first or might need to change the 9 to a 1
+	asm volatile (
+			"movl $page_directory, %%eax \n\
 			movl %%eax, %%cr3	\n\
-						  \
 			movl %%cr4, %%eax	\n\
 			orl $0x00000090, %%eax	\n\
 			movl %%eax, %%cr4	\n\
-						  \
 			movl %%cr0, %%eax	\n\
 			orl $0x80000000, %%eax	\n\
-			movl %%eax, %%cr0	\n"
+			movl %%eax, %%cr0"
 			:			//outputs
-			:"A"(page_directory)	//inputs
+			:"g"(page_directory)	//inputs
 			:"eax"			//clobbered registers
 
 		);
