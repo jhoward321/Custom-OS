@@ -22,7 +22,7 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
-	paging_init();
+	//paging_init();
 
 
 
@@ -154,6 +154,8 @@ entry (unsigned long magic, unsigned long addr)
 	clear();			//clear the screen
 
 	set_exeptions();		//set up known exceptions in table
+
+	paging_init();
 	lidt(idt_desc_ptr); 		//load interrupt descriptor table
 	//int i =1/0;			//use this line to test divide by zero
 
