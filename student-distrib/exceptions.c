@@ -8,7 +8,7 @@ void set_exeptions(){
 	//20 interrupts defined by intel
 	//32 reserved by intel but only 20 are defined
 
-//	disable_irq(1);		//disable keyboard during first 19 exceptions
+
 	SET_IDT_ENTRY(idt[0], ex_0);
 	SET_IDT_ENTRY(idt[1], ex_1);
 	SET_IDT_ENTRY(idt[2], ex_2);
@@ -29,10 +29,9 @@ void set_exeptions(){
 	SET_IDT_ENTRY(idt[17], ex_17);
 	SET_IDT_ENTRY(idt[18], ex_18);
 	SET_IDT_ENTRY(idt[19], ex_19);
-//	enable_irq(1);			//re-enable keyboard
 
-	//SET_IDT_ENTRY(idt[33], ex_33);
-	SET_IDT_ENTRY(idt[33], keyboard_handler);	//keyboard - moved handler to keyboard.c
+	SET_IDT_ENTRY(idt[33], ex_33);
+	//SET_IDT_ENTRY(idt[33], keyboard_handler);	//keyboard - moved handler to keyboard.c
 	SET_IDT_ENTRY(idt[40], ex_40);	//RTC
 
 
@@ -181,12 +180,13 @@ void ex_19(){
 void ex_33(){	//keyboard - handler moved to keyboard.c
 	clear();
 	printf("keyboard handler called\n");
+
 }
 */
 
 //referenced code from this site
 //http://wiki.osdev.org/RTC#Interrupts_and_Register_C
-void ex_40(){	//RTC
+void rtc_handler(){	//RTC
 	//have to read register C to allow interrupt to happen again
 	/*
 	outb(RTC_REG_C, RTC_CMD);
