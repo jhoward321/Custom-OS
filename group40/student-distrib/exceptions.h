@@ -33,8 +33,9 @@ void ex_17();
 void ex_18();
 void ex_19();
 
-void ex_33(); //keyboard
-void ex_40(); //rtc
+extern void ex_33(); //keyboard
+extern void ex_40(); //rtc
+void rtc_handler(); //rtc
 
 void ex_128(); //rtc
 
