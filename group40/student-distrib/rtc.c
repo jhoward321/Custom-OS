@@ -34,8 +34,7 @@ void rtc_init(void){
 	outb(RTC_REG_A, RTC_CMD);
 	outb((prev & 0x0F) | rate, RTC_MEM);
 	sti();
-	enable_irq(8); //enable rtc irq
-
+	
 }
 
 //probably will need more rtc functions but this should at least initialize it
