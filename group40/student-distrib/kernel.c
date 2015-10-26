@@ -186,8 +186,14 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Execute the first program (`shell') ... */
 	kb_index = 0;
+	uint8_t  temp = kb_index ;
 	while(1){
-		printf("%s", kb_in_buffer);
+		if (temp != kb_index){
+
+			printf("%c", kb_in_buffer[kb_index-1]);
+			temp = kb_index ;
+		}
+
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
