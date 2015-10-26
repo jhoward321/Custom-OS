@@ -31,7 +31,7 @@ uint8_t kb_index;
 uint8_t kb_in_buffer[MAXBUFLEN];
 
 void keyboard_init(void){
-	enable_irq(1); //enable keyboard interrupts - may need more here but it's a starting point
+	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
 	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
 	//will test interrupt handler first to see if this is necessary
@@ -76,7 +76,8 @@ unsigned char KBkeys[MAXBUFLEN] =
 //for checkpoint 1 keyboard handler must echo correct character to screen, doesnt matter where it appears
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 void keyboard_handler(void){
-	uint8_t scancode, status, keycode;
+	uint8_t scancode, keycode;
+	//uint8_t status;
 
 	//read keyboard status
 	//status = inb(KB_STATUS);
@@ -90,7 +91,7 @@ void keyboard_handler(void){
 		//kb_index++;
 		putc(keycode);
 	}
-	send_eoi(1); //done with interrupt
+	send_eoi(KEYBOARD_IRQ); //done with interrupt
 
 
 }

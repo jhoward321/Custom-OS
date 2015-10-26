@@ -24,6 +24,11 @@
 #define ICW3_SLAVE    0x02
 #define ICW4          0x01
 
+//interrupt numbers for PIC:
+#define KEYBOARD_IRQ 1
+#define SLAVE_IRQ 2
+#define RTC_IRQ 8
+
 /* End-of-interrupt byte.  This gets OR'd with
  * the interrupt number and sent out to the PIC
  * to declare the interrupt finished */

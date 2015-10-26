@@ -16,6 +16,7 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
+
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
 void
@@ -160,9 +161,9 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 	//unmask needed irq lines
-	enable_irq(1);			//enable keyboard
-	enable_irq(2);			//enable slave irq
-	enable_irq(8);			//enable RTC
+	enable_irq(KEYBOARD_IRQ);			//enable keyboard
+	enable_irq(SLAVE_IRQ);			//enable slave irq
+	enable_irq(RTC_IRQ);			//enable RTC
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -181,12 +182,13 @@ entry (unsigned long magic, unsigned long addr)
 
 //testing
 
-	disable_irq(8);
-	uint32_t i = 0;
+	disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
 
-	//uint32_t* ptr = NULL;
-	//i = *ptr;
-	i++;
+//also for testing exceptions with variable i:
+	// uint32_t i = 0;
+	//uint32_t* ptr = NULL;  
+	//i = *ptr;			//use this line to test page fault
+	// i++;
 	//i= 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */

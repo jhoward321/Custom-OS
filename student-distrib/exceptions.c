@@ -195,7 +195,7 @@ void rtc_handler(){	//RTC
 
 	test_interrupts(); //for checkpoint 1 - in lib.c
 
-	send_eoi(8); //interrupt is over
+	send_eoi(RTC_IRQ); //interrupt is over
 
 }
 
