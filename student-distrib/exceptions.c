@@ -188,7 +188,7 @@ void ex_33(){	//keyboard - handler moved to keyboard.c
 //http://wiki.osdev.org/RTC#Interrupts_and_Register_C
 void rtc_handler(){	//RTC
 	//have to read register C to allow interrupt to happen again
-	
+
 	outb(RTC_REG_C, RTC_CMD);
 	//dont care about contents
 	inb(RTC_MEM);
@@ -200,5 +200,5 @@ void rtc_handler(){	//RTC
 }
 
 void ex_128(){	//system call
-
+	printf("system call\n");
 }
