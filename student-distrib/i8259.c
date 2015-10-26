@@ -40,10 +40,6 @@ i8259_init(void)
 
 
 	//unmask needed irq lines
-	enable_irq(1);			//enable keyboard
-	enable_irq(2);			//enable slave irq
-	enable_irq(8);			//enable RTC
-
 
 }
 

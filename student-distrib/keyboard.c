@@ -91,5 +91,6 @@ void keyboard_handler(void){
 	}
 
 	send_eoi(1); //done with interrupt
+	
 
 }
