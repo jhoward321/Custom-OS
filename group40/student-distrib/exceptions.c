@@ -4,6 +4,11 @@
 #include "keyboard.h"
 #include "lib.h"
 
+#define KEYBOARD_IDT 33 			//Keyboard IDT value
+#define RTC_IDT 40 					//RTC IDT value
+#define SYSTEM_CALL_IDT 128 		//System Call IDT value
+#define DPL_SYS 3 					//DPL value necessary for system call situations
+
 void set_exeptions(){
 	//20 interrupts defined by intel
 	//32 reserved by intel but only 20 are defined
@@ -30,21 +35,21 @@ void set_exeptions(){
 	SET_IDT_ENTRY(idt[18], ex_18);
 	SET_IDT_ENTRY(idt[19], ex_19);
 
-	SET_IDT_ENTRY(idt[33], ex_33);
+	SET_IDT_ENTRY(idt[KEYBOARD_IDT], ex_33);
 	//SET_IDT_ENTRY(idt[33], keyboard_handler);	//keyboard - moved handler to keyboard.c
-	SET_IDT_ENTRY(idt[40], ex_40);	//RTC
+	SET_IDT_ENTRY(idt[RTC_IDT], ex_40);	//RTC
 
 
-	SET_IDT_ENTRY(idt[128], ex_128);//system call
+	SET_IDT_ENTRY(idt[SYSTEM_CALL_IDT], ex_128);//system call
 
 	//for loop below sets up first 20 interrupt handlers
 	uint8_t i;
 	for(i = 0; i < 20; i++){
 		set_interrupt_gate(i);
 	}
-	set_interrupt_gate(33);
-	set_interrupt_gate(40);
-	set_interrupt_gate(128); //this needs a different dpl value since needs to be accessed by user space
+	set_interrupt_gate(KEYBOARD_IDT);
+	set_interrupt_gate(RTC_IDT);
+	set_interrupt_gate(SYSTEM_CALL_IDT); //this needs a different dpl value since needs to be accessed by user space
 }
 
 void set_interrupt_gate(uint8_t i){
@@ -55,10 +60,10 @@ void set_interrupt_gate(uint8_t i){
 	idt[i].reserved1 	= 1;
 	idt[i].size 		= 1;	//side is D, 1 = 32 bits
 	idt[i].reserved0	= 0;
-	if(i == 128)
-		idt[i].dpl 	= 3;
+	if(i == SYSTEM_CALL_IDT)
+		idt[i].dpl 	= DPL_SYS; 		//necessary DPL value for system call 
 	else
-		idt[i].dpl 	= 0;
+		idt[i].dpl 	= 0; 		//default DPL value when no system call
 	idt[i].present 		= 1;
 }
 
@@ -176,13 +181,6 @@ void ex_19(){
 	ex_halt();
 }
 
-/*
-void ex_33(){	//keyboard - handler moved to keyboard.c
-	clear();
-	printf("keyboard handler called\n");
-
-}
-*/
 
 //referenced code from this site
 //http://wiki.osdev.org/RTC#Interrupts_and_Register_C
