@@ -158,12 +158,14 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init the PIC */
 	i8259_init();
-
+	enable_irq(1);			//enable keyboard
+	enable_irq(2);			//enable slave irq
+	enable_irq(8);			//enable RTC
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
 	//init RTC
-	rtc_init();
+	//rtc_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
