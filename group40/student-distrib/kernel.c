@@ -165,7 +165,7 @@ entry (unsigned long magic, unsigned long addr)
 	 * PIC, any other initialization stuff... */
 
 	//init RTC
-	//rtc_init();
+	rtc_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -179,21 +179,14 @@ entry (unsigned long magic, unsigned long addr)
 
 
 
-	//keyboard_init();
+
 	//int* ptr = NULL;
 	//uint32_t i = 0;
 	//i = 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */
-	kb_index = 0;
-	uint8_t  temp = kb_index ;
+	keyboard_init();
 	while(1){
-		if (temp != kb_index){
-
-			printf("%c", kb_in_buffer[kb_index-1]);
-			temp = kb_index ;
-		}
-
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
