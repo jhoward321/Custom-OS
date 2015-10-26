@@ -27,10 +27,7 @@
 */
 
 //#define KB_PORT 0x60 moved to header but left here for reference
-#define MAXBUFLEN 128
 
-uint8_t kb_in_buffer[MAXBUFLEN]; //this will probably need to be modified for checkpoint 2 which specifies the 128 length buffer
-uint8_t kb_out_buffer[MAXBUFLEN];
 
 void keyboard_init(void){
 	enable_irq(1); //enable keyboard interrupts - may need more here but it's a starting point
@@ -77,8 +74,7 @@ unsigned char KBkeys[MAXBUFLEN] =
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 void keyboard_handler(void){
 	uint8_t scancode, status, keycode;
-	clear();
-	printf("keyboard handler called\n");
+
 	//read keyboard status
 	//status = inb(KB_STATUS);
 	scancode = inb(KB_PORT);
@@ -87,10 +83,10 @@ void keyboard_handler(void){
 	//if 0 the key is down, if 1 its been released
 	if(!(scancode & KB_PRESS_MASK)){
 		keycode = KBkeys[scancode];
-		printf("Key press is: %c\n", keycode);
+		kb_in_buffer[kb_index] = keycode;
+		kb_index++;
 	}
-
 	send_eoi(1); //done with interrupt
-	
+
 
 }
