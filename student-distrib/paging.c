@@ -14,12 +14,13 @@
 
 
 //magic numbers
-#define NUM_INDEXES 1024
-#define ALIGN_SIZE 4096
-#define NOT_PRESENT 0x00000002
-#define PRESENT 0x00000003
-#define KERNEL_VIRTADR 0x400000 //(4MB)
-
+#define NUM_INDEXES 1024 				//number of indexes in directory
+#define ALIGN_SIZE 4096 				//4k, size for alignment
+#define NOT_PRESENT 0x00000002 			//key for mapping kernel as not present
+#define PRESENT 0x00000003 				//key for mapping kernel as present
+#define KERNEL_VIRTADR 0x400000 		//kernel virtual address (4MB)
+#define VID_MEM_LOC 0xB8 				//video memory location
+#define PAGE_DIREC_SIZE_MASK 0x80 		//Mask to set Page Directory Size: stores the page size for that specific entry. (4MB)
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
@@ -41,10 +42,10 @@ void paging_init(){
 	}
 
 
-	first_page_table[0xB8] = (0xB8 * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
+	first_page_table[VID_MEM_LOC] = (VID_MEM_LOC * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
 	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
 	//directory 1 is kernel
-	page_directory[1] = KERNEL_VIRTADR | (0x80 | PRESENT); //map kernel as present
+	page_directory[1] = KERNEL_VIRTADR | (PAGE_DIREC_SIZE_MASK | PRESENT); //map kernel as present
 
 
 	//the assembly below loads the page directory

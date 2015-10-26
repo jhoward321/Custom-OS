@@ -12,8 +12,8 @@
 uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
 
-#define INIT_MASK 0xFF
-#define PIC_PORT_LIM 8
+#define INIT_MASK 0xFF 				//bitmask to mask all IRQ lines
+#define PIC_PORT_LIM 8 				//number of IRQs for each PIC
 
 /* Initialize the 8259 PIC */
 void

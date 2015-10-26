@@ -182,7 +182,7 @@ entry (unsigned long magic, unsigned long addr)
 
 //testing
 
-	disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
+	//disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
 
 //also for testing exceptions with variable i:
 	// uint32_t i = 0;
