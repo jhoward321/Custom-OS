@@ -22,9 +22,6 @@ void
 entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
-	//paging_init();
-
-
 
 	/* Clear the screen. */
 	clear();
@@ -155,9 +152,9 @@ entry (unsigned long magic, unsigned long addr)
 
 	set_exeptions();		//set up known exceptions in table
 
-	paging_init();
+	paging_init();			//enable paging
 	lidt(idt_desc_ptr); 		//load interrupt descriptor table
-	//int i =1/0;			//use this line to test divide by zero
+
 
 	/* Init the PIC */
 	i8259_init();
@@ -180,12 +177,14 @@ entry (unsigned long magic, unsigned long addr)
 
 
 
-	keyboard_init();
+	//keyboard_init();
 	//int* ptr = NULL;
-	//int i = *ptr;
+	//uint32_t i = 0;
+	//i = 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */
-	while(1){}
+	while(1){
+	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

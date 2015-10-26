@@ -76,7 +76,7 @@ unsigned char KBkeys[MAXBUFLEN] =
 //for checkpoint 1 keyboard handler must echo correct character to screen, doesnt matter where it appears
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 void keyboard_handler(void){
-	unsigned char scancode, status, keycode;
+	uint8_t scancode, status, keycode;
 	clear();
 	printf("keyboard handler called\n");
 	//read keyboard status
@@ -91,4 +91,5 @@ void keyboard_handler(void){
 	}
 
 	send_eoi(1); //done with interrupt
+
 }

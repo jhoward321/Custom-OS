@@ -14,6 +14,7 @@ uint8_t slave_mask; /* IRQs 8-15 */
 
 #define INIT_MASK 0xFF
 
+
 /* Initialize the 8259 PIC */
 void
 i8259_init(void)
@@ -34,9 +35,16 @@ i8259_init(void)
 	outb(ICW3_SLAVE, SLAVE_8259_DATA); //tell slave that its a slave of master on irq2
 	outb(ICW4, SLAVE_8259_DATA);
 
-	//remask lines
 	outb(INIT_MASK, MASTER_8259_DATA);
-	outb(INIT_MASK, MASTER_8259_DATA);
+	outb(INIT_MASK, SLAVE_8259_DATA);
+
+
+	//unmask needed irq lines
+	enable_irq(1);			//enable keyboard
+	enable_irq(2);			//enable slave irq
+	enable_irq(8);			//enable RTC
+
+
 }
 
 /* Enable (unmask) the specified IRQ */
@@ -55,7 +63,7 @@ enable_irq(uint32_t irq_num)
 		port = SLAVE_8259_DATA;
 		irq_num -= 8;
 	}
-	value = inb(port) | (1 << irq_num);
+	value = inb(port) & ~(1 << irq_num);
 	outb(value, port);
 
 }
@@ -73,7 +81,7 @@ disable_irq(uint32_t irq_num)
 		port = SLAVE_8259_DATA;
 		irq_num -= 8;
 	}
-	value = inb(port) & ~(1 << irq_num);
+	value = inb(port) | (1 << irq_num);
 	outb(value, port);
 }
 
@@ -81,6 +89,13 @@ disable_irq(uint32_t irq_num)
 void
 send_eoi(uint32_t irq_num)
 {
+	/*
+	if(irq_num >= 8)
+		outb(EOI, SLAVE_8259_PORT);
+
+	outb(EOI, MASTER_8259_PORT);
+
+*/
 
 	if(irq_num >= 8){
 		//have to get the actual EOI and pass it to slave if originated on slave PIC
@@ -92,4 +107,5 @@ send_eoi(uint32_t irq_num)
 		//notify master PIC
 		outb(EOI | irq_num, MASTER_8259_PORT);
 	}
+
 }
