@@ -27,7 +27,8 @@
 */
 
 //#define KB_PORT 0x60 moved to header but left here for reference
-
+uint8_t kb_index;
+uint8_t kb_in_buffer[MAXBUFLEN];
 
 void keyboard_init(void){
 	enable_irq(1); //enable keyboard interrupts - may need more here but it's a starting point
