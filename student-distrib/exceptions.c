@@ -188,13 +188,13 @@ void ex_33(){	//keyboard - handler moved to keyboard.c
 //http://wiki.osdev.org/RTC#Interrupts_and_Register_C
 void rtc_handler(){	//RTC
 	//have to read register C to allow interrupt to happen again
-	/*
+	
 	outb(RTC_REG_C, RTC_CMD);
 	//dont care about contents
 	inb(RTC_MEM);
 
 	test_interrupts(); //for checkpoint 1 - in lib.c
-	*/
+
 	send_eoi(8); //interrupt is over
 
 }

@@ -10,12 +10,12 @@
 //code is referenced from link below
 //http://wiki.osdev.org/RTC
 void rtc_init(void){
-	char prev; 
+	char prev;
 	//select register B for reading
 	outb(RTC_REG_B, RTC_CMD);
 
 	//store current value stored in register B
-	prev = inb(RTC_MEM); 
+	prev = inb(RTC_MEM);
 
 	//reselect B for writing - the read moved it
 	outb(RTC_REG_B, RTC_CMD);
@@ -28,11 +28,12 @@ void rtc_init(void){
 	int rate = 15;
 	rate &= 0x0F;
  	// select register A for reading
+	cli();
 	outb(RTC_REG_A, RTC_CMD);
 	prev = inb(RTC_MEM);
 	outb(RTC_REG_A, RTC_CMD);
 	outb((prev & 0x0F) | rate, RTC_MEM);
-
+	sti();
 	enable_irq(8); //enable rtc irq
 
 }

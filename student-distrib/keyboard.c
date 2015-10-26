@@ -35,6 +35,8 @@ void keyboard_init(void){
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
 	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
 	//will test interrupt handler first to see if this is necessary
+	//kb_index = 0;
+	//uint8_t  temp = kb_index ;
 }
 
 //https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
@@ -53,7 +55,7 @@ unsigned char KBkeys[MAXBUFLEN] =
 	'a','s','d','f','g','h','j','k','l',';','\'', //index 40
 	'`',
 	0, //left shift we dont care about for checkpoint 1
-	'\'','z','x','c','v','b','n','m',',','.','/', //index 54
+	'\\','z','x','c','v','b','n','m',',','.','/', //index 54
 	0, //right shift
 	'*',
 	0, //left alt
@@ -84,8 +86,9 @@ void keyboard_handler(void){
 	//if 0 the key is down, if 1 its been released
 	if(!(scancode & KB_PRESS_MASK)){
 		keycode = KBkeys[scancode];
-		kb_in_buffer[kb_index] = keycode;
-		kb_index++;
+		//kb_in_buffer[kb_index] = keycode;
+		//kb_index++;
+		putc(keycode);
 	}
 	send_eoi(1); //done with interrupt
 
