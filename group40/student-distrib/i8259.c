@@ -13,7 +13,7 @@ uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
 
 #define INIT_MASK 0xFF
-
+#define PIC_PORT_LIM 8
 
 /* Initialize the 8259 PIC */
 void
@@ -48,13 +48,13 @@ enable_irq(uint32_t irq_num)
 	uint8_t value;
 
 	//irq is on master PIC
-	if(irq_num < 8)
+	if(irq_num < PIC_PORT_LIM)
 		port = MASTER_8259_DATA;
 
 	//irq is on slave PIC
 	else{
 		port = SLAVE_8259_DATA;
-		irq_num -= 8;
+		irq_num -= PIC_PORT_LIM;
 	}
 	value = inb(port) & ~(1 << irq_num);
 	outb(value, port);
@@ -68,11 +68,11 @@ disable_irq(uint32_t irq_num)
 	uint16_t port;
 	uint8_t value;
 
-	if(irq_num < 8)
+	if(irq_num < PIC_PORT_LIM)
 		port = MASTER_8259_DATA;
 	else{
 		port = SLAVE_8259_DATA;
-		irq_num -= 8;
+		irq_num -= PIC_PORT_LIM;
 	}
 	value = inb(port) | (1 << irq_num);
 	outb(value, port);
@@ -82,17 +82,10 @@ disable_irq(uint32_t irq_num)
 void
 send_eoi(uint32_t irq_num)
 {
-	/*
-	if(irq_num >= 8)
-		outb(EOI, SLAVE_8259_PORT);
-
-	outb(EOI, MASTER_8259_PORT);
-
-*/
-
-	if(irq_num >= 8){
+	
+	if(irq_num >= PIC_PORT_LIM){
 		//have to get the actual EOI and pass it to slave if originated on slave PIC
-		outb(EOI | (irq_num - 8) , SLAVE_8259_PORT);
+		outb(EOI | (irq_num - PIC_PORT_LIM) , SLAVE_8259_PORT);
 		//notify master on irq2(where the slave is)
 		outb(EOI | 2, MASTER_8259_PORT);
 	}

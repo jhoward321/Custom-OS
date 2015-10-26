@@ -7,6 +7,10 @@
 //http://lxr.free-electrons.com/source/drivers/char/rtc.c
 //https://www.kernel.org/doc/Documentation/rtc.txt
 
+
+//rate must be above 2 and not over 15
+#define RTC_RATE 15
+#define RTC_MASK 0x0F
 //code is referenced from link below
 //http://wiki.osdev.org/RTC
 void rtc_init(void){
@@ -25,14 +29,14 @@ void rtc_init(void){
 	//now need to set frequency
 
 	//rate must be above 2 and not over 15
-	int rate = 15;
-	rate &= 0x0F;
+	int rate = RTC_RATE;
+	rate &= RTC_MASK;
  	// select register A for reading
 	cli();
 	outb(RTC_REG_A, RTC_CMD);
 	prev = inb(RTC_MEM);
 	outb(RTC_REG_A, RTC_CMD);
-	outb((prev & 0x0F) | rate, RTC_MEM);
+	outb((prev & RTC_MASK) | rate, RTC_MEM);
 	sti();
 	
 }
