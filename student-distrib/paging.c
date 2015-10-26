@@ -36,12 +36,12 @@ void paging_init(){
 	    //   Write Enabled: It can be both read from and written to
 	    //   Not Present: The page table is not present
 	    page_directory[i] = NOT_PRESENT;
-	    first_page_table[i] = (i * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
+
 	    //first_page_table[i] = (i * 0x1000) | 3; //x1000 is just 4096
 	}
 
 
-
+	first_page_table[0xB8] = (0xB8 * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
 	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
 	//directory 1 is kernel
 	page_directory[1] = KERNEL_VIRTADR | (0x80 | PRESENT); //map kernel as present
@@ -55,10 +55,10 @@ void paging_init(){
 
 	//the first or might need to change the 9 to a 1
 	asm volatile (
-			"movl $page_directory, %%eax \n\
+			"movl %0, %%eax \n\
 			movl %%eax, %%cr3	\n\
 			movl %%cr4, %%eax	\n\
-			orl $0x00000090, %%eax	\n\
+			orl $0x00000010, %%eax	\n\
 			movl %%eax, %%cr4	\n\
 			movl %%cr0, %%eax	\n\
 			orl $0x80000000, %%eax	\n\

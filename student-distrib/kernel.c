@@ -23,6 +23,7 @@ entry (unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi;
 
+
 	/* Clear the screen. */
 	clear();
 
@@ -151,13 +152,14 @@ entry (unsigned long magic, unsigned long addr)
 	clear();			//clear the screen
 
 	set_exeptions();		//set up known exceptions in table
-
 	paging_init();			//enable paging
+
 	lidt(idt_desc_ptr); 		//load interrupt descriptor table
 
 
 	/* Init the PIC */
 	i8259_init();
+	//unmask needed irq lines
 	enable_irq(1);			//enable keyboard
 	enable_irq(2);			//enable slave irq
 	enable_irq(8);			//enable RTC
@@ -177,16 +179,21 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 
 
+//testing
 
+	disable_irq(8);
+	uint32_t i = 0;
+	//uint32_t* ptr = NULL;
+	//i = *ptr;
 
-
-	//int* ptr = NULL;
-	//uint32_t i = 0;
-	//i = 1/0;			//use this line to test divide by zero
+	//i= 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */
 	keyboard_init();
+
 	while(1){
+		i+=100000000;
+		printf("%u\n", i);
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
