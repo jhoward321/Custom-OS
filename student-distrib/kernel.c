@@ -185,7 +185,9 @@ entry (unsigned long magic, unsigned long addr)
 	//i = 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */
+	kb_index = 0;
 	while(1){
+		printf("%s", kb_in_buffer);
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
