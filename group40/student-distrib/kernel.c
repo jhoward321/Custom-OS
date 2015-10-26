@@ -183,17 +183,16 @@ entry (unsigned long magic, unsigned long addr)
 
 	disable_irq(8);
 	uint32_t i = 0;
+
 	//uint32_t* ptr = NULL;
 	//i = *ptr;
-
+	i++;
 	//i= 1/0;			//use this line to test divide by zero
 
 	/* Execute the first program (`shell') ... */
 	keyboard_init();
 
 	while(1){
-		i+=100000000;
-		printf("%u\n", i);
 	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
