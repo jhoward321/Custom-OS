@@ -34,12 +34,28 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	if(inode > boot_block->total_inodes || inode < 0 || buf == NULL)
 		return -1;
 
-	if(offset + length > BYTES_PER_BLOCK)
-		length = BYTES_PER_BLOCK - offset;	//maybe off by 1??
-	uint32_t i;
-	for(i=0; i < length; i++){
-		//buf[i] = 
+	uint32_t* inode_addr = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
+	uint32_t file_length = *inode_addr;
 
+	uint32_t start_index = offset / BYTES_PER_BLOCK; 		//which data block we're going to start
+	uint32_t start_block_offset = offset % BYTES_PER_BLOCK; 			//offset within the current data block
+
+	uint32_t end_index = (offset + length) / BYTES_PER_BLOCK
+	uint32_t end_block_offset = (offset + length) % BYTES_PER_BLOCK; 			//offset within the current data block
+
+	uint32_t i;
+
+	
+	for(i=start_index ; i <=end_index ; i++){
+		if(i == start_index){
+
+		}
+		else if(i == end_index){
+
+		}
+		else{
+
+		}
 	}
 
 	return 0;
@@ -47,7 +63,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 //write data to a file, should never be called since we have a read only file system
 int32_t write_data(uint32_t inode, uint32_t offset, const uint8_t* buf, uint32_t length){
-	return -1; //write data always fails, ROM only
+	return -1; //write data always fails, read only
 }
 
 //open a file
