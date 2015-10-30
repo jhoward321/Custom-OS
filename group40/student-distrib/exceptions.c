@@ -61,7 +61,7 @@ void set_interrupt_gate(uint8_t i){
 	idt[i].size 		= 1;	//side is D, 1 = 32 bits
 	idt[i].reserved0	= 0;
 	if(i == SYSTEM_CALL_IDT)
-		idt[i].dpl 	= DPL_SYS; 		//necessary DPL value for system call 
+		idt[i].dpl 	= DPL_SYS; 		//necessary DPL value for system call
 	else
 		idt[i].dpl 	= 0; 		//default DPL value when no system call
 	idt[i].present 		= 1;
@@ -191,7 +191,7 @@ void rtc_handler(){	//RTC
 	//dont care about contents
 	inb(RTC_MEM);
 
-	test_interrupts(); //for checkpoint 1 - in lib.c
+	//test_interrupts(); //for checkpoint 1 - in lib.c
 
 	send_eoi(RTC_IRQ); //interrupt is over
 
