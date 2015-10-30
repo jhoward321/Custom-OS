@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "paging.h"
+#include "fs.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -176,17 +177,23 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	sti();
 
-	clear();
+
 	printf("Enabling Interrupts\n");
 
 
 //testing
 
+
+
+	int32_t i = 0;
+	//uint32_t* ptr = NULL;
+	//i = *ptr;
 	//disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
+
 
 //also for testing exceptions with variable i:
 	// uint32_t i = 0;
-	//uint32_t* ptr = NULL;  
+	//uint32_t* ptr = NULL;
 	//i = *ptr;			//use this line to test page fault
 	// i++;
 	//i= 1/0;			//use this line to test divide by zero

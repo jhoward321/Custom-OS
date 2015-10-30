@@ -4,47 +4,15 @@
 .align   4
 
 ex_33:
-        pushl %EAX
-        pushl %ECX
-        pushl %EDX
-        pushl %EBX
-        pushl %ESP
-        pushl %EBP
-        pushl %ESI
-        pushl %EDI
-
+        pusha
         cld
         call keyboard_handler
-
-        popl %EDI
-        popl %ESI
-        popl %EBP
-        popl %ESP
-        popl %EBX
-        popl %EDX
-        popl %ECX
-        popl %EAX
+        popa
         iret
 
 ex_40:
-        pushl %EAX
-        pushl %ECX
-        pushl %EDX
-        pushl %EBX
-        pushl %ESP
-        pushl %EBP
-        pushl %ESI
-        pushl %EDI
-
+        pusha
         cld
         call rtc_handler
-
-        popl %EDI
-        popl %ESI
-        popl %EBP
-        popl %ESP
-        popl %EBX
-        popl %EDX
-        popl %ECX
-        popl %EAX
+        popa
         iret
