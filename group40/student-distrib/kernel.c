@@ -56,9 +56,6 @@ entry (unsigned long magic, unsigned long addr)
 		printf ("cmdline = %s\n", (char *) mbi->cmdline);
 
 
-
-
-
 	if (CHECK_FLAG (mbi->flags, 3)) {
 		int mod_count = 0;
 		int i;
@@ -188,9 +185,7 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 
 
-//testing
-
-
+	disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
 
 	//int32_t i = 0;
 	//uint32_t* ptr = NULL;

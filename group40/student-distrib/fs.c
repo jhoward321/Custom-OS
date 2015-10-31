@@ -34,33 +34,59 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	if(inode > boot_block->total_inodes || inode < 0 || buf == NULL)
 		return -1;
 
-	uint32_t* inode_addr = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
-	uint32_t file_length = *inode_addr;
+	//address of the current inode where data will be extracted
+	uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
+	//first element of the inode structure gives the length of the file to be read 
+	uint32_t file_length = *curr_inode_address;
+	//check to see if the offset points to outside of the file's size 
+	if(file_length < offset){
+		return -1;
+	}
 
-	uint32_t start_index = offset / BYTES_PER_BLOCK; 		//which data block we're going to start
-	uint32_t start_block_offset = offset % BYTES_PER_BLOCK; 			//offset within the current data block
+	//address of the first data block
+	uint32_t* data_block_0_address = (uint32_t*)((uint32_t)boot_block + (boot_block->total_inodes + 1) * BYTES_PER_BLOCK);
 
-	uint32_t end_index = (offset + length) / BYTES_PER_BLOCK
-	uint32_t end_block_offset = (offset + length) % BYTES_PER_BLOCK; 			//offset within the current data block
-
-	uint32_t i;
-
+	//address of current data block number to be read (list of data block numbers are stored in the inode)
+	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + offset/BYTES_PER_BLOCK + 1);
 	
-	for(i=start_index ; i <=end_index ; i++){
-		if(i == start_index){
+	//current data block number to be read (stored in the inode)
+	uint32_t curr_data_block_index = *curr_data_block_index_addr;
 
+	//address of the current data block to be read
+	uint32_t* curr_data_block_address = (uint32_t*)((uint32_t)data_block_0_address + (curr_data_block_index * BYTES_PER_BLOCK));
+
+	uint32_t read_count = 0; 				//number of bytes read thus far
+	uint32_t byte_position = 0; 			//byte position into the file
+	// uint8_t curr_byte;						//current byte that is being read into the buffer
+
+	//variable to check how far in the file we are reading
+	byte_position = offset + read_count;
+	
+	while(length > read_count){
+
+		//read the byte from the corresponding offset of the current data block
+		buf[read_count] = *((uint8_t*)((uint32_t)curr_data_block_address + byte_position % BYTES_PER_BLOCK));
+
+		read_count++;							//increment bytes read counter
+		byte_position = offset + read_count; 	//re-set the byte position
+
+		//EOF reached ?
+		if (byte_position == file_length){
+			return 0;
 		}
-		else if(i == end_index){
-
-		}
-		else{
-
+		//end of block reached? : read from next block
+		if(byte_position % BYTES_PER_BLOCK == 0){
+			curr_data_block_index_addr++; 					//address points to the next data block index in inode
+			curr_data_block_index = *curr_data_block_index_addr;	//get the next data block index
+			//formula for getting the current data address is the same
+			curr_data_block_address = (uint32_t*)((uint32_t)data_block_0_address + (curr_data_block_index * BYTES_PER_BLOCK));
 		}
 	}
 
-	return 0;
-}
 
+	//if EOF not reached, return the number of bytes read
+	return read_count;
+}
 //write data to a file, should never be called since we have a read only file system
 int32_t write_data(uint32_t inode, uint32_t offset, const uint8_t* buf, uint32_t length){
 	return -1; //write data always fails, read only
