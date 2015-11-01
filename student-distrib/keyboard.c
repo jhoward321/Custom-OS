@@ -1,6 +1,7 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
+#include "paging.h"
 
 //https://www.kernel.org/pub/linux/kernel/people/marcelo/linux-2.4/drivers/char/keyboard.c
 //http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
@@ -26,11 +27,114 @@
 	see https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport for controller commands
 */
 
+
+/* Terminal driver notes
+when any printable characters typed - display on screen, need to handle all alphanumeric, symbols,
+shit/capslocl, dont need to support numpad
+now need to track screen location, need to support vertical scrolling
+ctrl-L = clear cursor and put it at the top
+need to support backspace and line-buffered input - buffer size 128
+see appendix B
+need external interface to support external data to terminal output
+write calls to terminal should interface nicely with keyboard input
+
+read should return data from one line that has been terminated by pressing enter, or as much as fits in
+buffer from one such line. Line returned should include the line feed character
+
+write writes data to the terminal. all data should be displayed immediately
+
+writing to terminal needs to briefly block interrupts to update screen data when printing
+
+terminal has 3 states - canonical returns one line of data at a time
+noncanonical returns 1 character at a time
+third is cbreak
+
+need a open, read, write, close function
+*/
+//http://www.computer-engineering.org/ps2keyboard/
 //#define KB_PORT 0x60 moved to header but left here for reference
-uint8_t kb_index;
-uint8_t kb_in_buffer[MAXBUFLEN];
+uint8_t kbbuf_index;
+uint8_t kb_buffer[MAXBUFLEN];
+//uint8_t out_buffer[MAXBUFLEN];
+//uint terminal_buffer[TERMINAL_BUF_LEN]; //terminal buffer
+uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
+kb_flags_t keyboard_status; //flags for shift, caps lock, etc
+//uint8_t terminal_index; //tracks current terminal number
+uint16_t cursor_x, cursor_y; //cursor position, 1 for each terminal
+
+void clear_screen(void){
+	clear();
+	cursor_x = 0;
+	cursor_y = 0;
+	update_cursor(cursor_x. cursor_y);
+}
+//read data from keyboard, return number of bytes read, read from terminanted line (enter)
+int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
+	if(buf == 0 || nbytes < 0)
+		return -1;
+	//wait until ready to read
+	while(!kb_buf_read){}
+	int readbytes;
+	if(nbytes > kbbuf_index){
+		int i;
+		for(i = 0; i < kbbuf_index; i++){
+			buf[i] = kb_buffer[i];
+		}
+		readbytes = i;
+	}
+	else{
+		int i;
+		for(i = 0; i < nbytes; i++){
+			buf[i] = kb_buffer[i];
+		}
+		readbytes = i;
+	}
+	//after reading need to reset buffer index and ready to read
+	kbbuf_index = 0;
+	kb_buf_read = 0;
+
+	return readbytes;
+}
+//write data to terminal, display immediately, return number of bytes written or -1 on failure
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
+	int byteswritten = 0;
+	if((buf == NULL) || (nbytes < 0))
+		return -1;
+	int i;
+	for(i = 0; i< nbytes; i++){
+		putc(buf[i], 0); //not sure this is right
+	}
+	return byteswritten;
+}
+
+//http://wiki.osdev.org/Text_Mode_Cursor
+void update_cursor(int x, int y){
+	unsigned short position = (x * 80) + y;
+	//cursor LOW port to vga index register
+	outb(0x0F, VGA1);
+	outb((unsigned char)(position & 0xFF), VGA2);
+	//cursor high port to vga index register
+	outb(0x0E, VGA1);
+	outb((unsigned char)((position >> 8) & 0xFF), VGA2);
+}
+
 
 void keyboard_init(void){
+	keyboard_status.ctrl = 0;
+	keyboard_status.shift = 0;
+	keyboard_status.alt = 0;
+	keyboard_status.capslock = 0;
+	kb_buf_read = 0;
+	kbbuf_index = 0;
+	cursor_x = 0;
+	cursor_y = 0;
+
+	int j;
+	for(j = 0; j < MAXBUFLEN; j++){
+			kb_buffer[j] = 0;
+	}
+
+	//terminal_index = 0; //initialize current terminal to the 1st one
 	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
 	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
@@ -41,56 +145,123 @@ void keyboard_init(void){
 
 //https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 //http://www.asciitable.com/
-unsigned char KBkeys[MAXBUFLEN] =
-{
-	//00 and 01 are error and ESC
-	0, //error code
-	27, //ESC
-	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', //0-9, -, =
-	'\b',//backspace
-	'\t',//tab - index 15
-	'q','w','e','r','t','y','u','i','o','p','[',']', //index 27
-	'\n', //enter key (index 1c = 28)
-	0, //left control but dont care about for checkpoint 1
-	'a','s','d','f','g','h','j','k','l',';','\'', //index 40
-	'`',
-	0, //left shift we dont care about for checkpoint 1
-	'\\','z','x','c','v','b','n','m',',','.','/', //index 54
-	0, //right shift
-	'*',
-	0, //left alt
-	' ', //space
-	0,//capslock
-	0,0,0,0,0,0,0,0,0,0,//F1-F10 index 69
-	0, 0, //numlock, scrolllock
-	0,0,0, //home, up, pgup
-	'-', //numpad minus
-	0,0,0,'+', //keypad left, 5, right, +, index 79
-	0,0,0, //numpad end, down, pgdown
-	0,0, //insert, delete
-	0,0,0, //dont usually occur but reference site for explanation - can leave as 0 most likely
-	0,0, //f11, f12 index 89
-	0, //rest are all 0
-};
+
 
 //for checkpoint 1 keyboard handler must echo correct character to screen, doesnt matter where it appears
 //referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
+
+//handler fills the keyboard buffer and then prints it to terminal
 void keyboard_handler(void){
 	uint8_t scancode, keycode;
 	//uint8_t status;
 
 	//read keyboard status
 	//status = inb(KB_STATUS);
-	scancode = inb(KB_PORT);
+	
+
+	if(inb(KB_STATUS) & KB_STATUS_MASK){
+		scancode = inb(KB_PORT);
+
+		switch(scancode){
+			case LCTRL_ON:
+				keyboard_status.ctrl = 1
+				break;
+			case LCTRL_OFF:
+				keyboard_status.ctrl = 0;
+				break;
+			case LSHIFT_ON:
+				keyboard_status.shift = 1;
+				break;
+			case LSHIFT_OFF:
+				keyboard_status.shift = 0;
+				break;
+			case RSHIFT_ON:
+				keyboard_status.shift = 1;
+				break;
+			case RSHIFT_OFF:
+				keyboard_status.shift = 0;
+				break;
+			case LALT_ON:
+				keyboard_status.alt = 1;
+				break;
+			case LALT_OFF:
+				keyboard_status.alt = 0;
+				break;
+			case CAPSLOCK:
+				if(!keyboard_status.capslock)
+					keyboard_status.capslock = 1;
+				else
+					keyboard_status.capslock = 0;
+				break;
+			case ENTER:
+				kb_buffer[kbbuf_index] = '\n';
+				kbbuf_index++;
+				putc('\n');
+				kb_buf_read = 1;
+				cursor_y++;
+				cursor_x = 0;
+				update_cursor(cursor_x, cursor_y);
+				break;
+			case BACKSPACE:
+				if(cursor_x > 0){
+					cursor_x--;
+					putc(' ');
+					cursor_x--;//have to decrement cursor again after adding space
+					if(kbbuf_index > 0)
+						kbbuf_index--;
+					update_cursor(cursor_x, cursor_y);
+				}
+
+			//still need enter and backspace
+			//process scancode and add correct character to buffer
+			default:
+				if(!(scancode & KB_PRESS_MASK)){
+
+					//ctl L means clear screen
+					if(keyboard_status.ctl && scancode == L){
+						//call clear screen
+						clear_screen();
+					}
+					//no shift no caps
+					if(!keyboard_status.shift && !keyboard_status.capslock){
+						keycode = KBkeys[0][scancode];
+					}
+					//only shift
+					else if(keyboard_status.shift && !keyboard_status.capslock){
+						keycode = KBkeys[1][scancode];
+					}
+					//only capslock
+					else if(!keyboard_status.shift && keyboard_status.capslock){
+						keycode = KBkeys[2][scancode];
+					}
+					//capslock and shift
+					else if(keyboard_status.shift && keyboard_status.capslock){
+						keycode = KBkeys[3][scancode];
+					}
+
+					//put into buffer
+					if(kbbuf_index < MAXBUFLEN && keycode){
+						kb_buffer[kbbuf_index] = keycode;
+						kbbuf_index++;
+						cursor_x ++;
+						putc(keycode);
+						update_cursor(cursor_x, cursor_y);
+					}
+				}
+				break;
+		}
+	}
+
+
 
 	//have to check high order bit to check if key is up or down (and with x80 to get high order bit)
 	//if 0 the key is down, if 1 its been released
-	if(!(scancode & KB_PRESS_MASK)){
-		keycode = KBkeys[scancode];
-		//kb_in_buffer[kb_index] = keycode;
-		//kb_index++;
-		putc(keycode);
-	}
+	// if(!(scancode & KB_PRESS_MASK)){
+	// 	keycode = KBkeys[scancode];
+	// 	//kb_in_buffer[kb_index] = keycode;
+	// 	//kb_index++;
+	// 	putc(keycode);
+	// }
 	send_eoi(KEYBOARD_IRQ); //done with interrupt
 
 
