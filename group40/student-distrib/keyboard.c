@@ -62,14 +62,15 @@ kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 //uint8_t terminal_index; //tracks current terminal number
 uint16_t cursor_x, cursor_y; //cursor position, 1 for each terminal
 
+
 void clear_screen(void){
 	clear();
 	cursor_x = 0;
 	cursor_y = 0;
-	update_cursor(cursor_x. cursor_y);
+	update_cursor(cursor_x, cursor_y);
 }
 //read data from keyboard, return number of bytes read, read from terminanted line (enter)
-int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 	if(buf == 0 || nbytes < 0)
 		return -1;
 	//wait until ready to read
@@ -96,13 +97,13 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 	return readbytes;
 }
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
-int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
+int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes){
 	int byteswritten = 0;
 	if((buf == NULL) || (nbytes < 0))
 		return -1;
 	int i;
 	for(i = 0; i< nbytes; i++){
-		putc(buf[i], 0); //not sure this is right
+		putc(buf[i]); //not sure this is right
 	}
 	return byteswritten;
 }
@@ -164,7 +165,7 @@ void keyboard_handler(void){
 
 		switch(scancode){
 			case LCTRL_ON:
-				keyboard_status.ctrl = 1
+				keyboard_status.ctrl = 1;
 				break;
 			case LCTRL_OFF:
 				keyboard_status.ctrl = 0;
@@ -218,7 +219,7 @@ void keyboard_handler(void){
 				if(!(scancode & KB_PRESS_MASK)){
 
 					//ctl L means clear screen
-					if(keyboard_status.ctl && scancode == L){
+					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
 						clear_screen();
 					}

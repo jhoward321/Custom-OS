@@ -55,10 +55,11 @@ typedef struct kb_flags_t{
 // }terminal_t;
 
 //4 for noshift/caps, shift, caps, caps+shift
-static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
+static const uint8_t KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 {
 	//no caps/shift
-	{0, //error code
+	{
+	0, //error code
 	27, //ESC
 	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', //0-9, -, =
 	'\b',//backspace
@@ -75,7 +76,7 @@ static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 	0, //left alt
 	' ', //space
 	0,//capslock
-	0,0,0,0,0,0,0,0,0,0//F1-F10 index 69
+	0,0,0,0,0,0,0,0,0,0,//F1-F10 index 69
 	0, 0, //numlock, scrolllock
 	0,0,0, //home, up, pgup
 	'-', //numpad minus
@@ -105,7 +106,7 @@ static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 	0, //left alt
 	' ', //space
 	0,//capslock
-	0,0,0,0,0,0,0,0,0,0//F1-F10 index 69
+	0,0,0,0,0,0,0,0,0,0,//F1-F10 index 69
 	0, 0, //numlock, scrolllock
 	0,0,0, //home, up, pgup
 	'-', //numpad minus
@@ -135,7 +136,7 @@ static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 	0, //left alt
 	' ', //space
 	0,//capslock
-	0,0,0,0,0,0,0,0,0,0//F1-F10 index 69
+	0,0,0,0,0,0,0,0,0,0,//F1-F10 index 69
 	0, 0, //numlock, scrolllock
 	0,0,0, //home, up, pgup
 	'-', //numpad minus
@@ -165,7 +166,7 @@ static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 	0, //left alt
 	' ', //space
 	0,//capslock
-	0,0,0,0,0,0,0,0,0,0//F1-F10 index 69
+	0,0,0,0,0,0,0,0,0,0,//F1-F10 index 69
 	0, 0, //numlock, scrolllock
 	0,0,0, //home, up, pgup
 	'-', //numpad minus
@@ -181,8 +182,8 @@ static const char KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 void keyboard_init(void); //not sure if this is even needed
 void keyboard_handler(void); //exception handler for keyboard
 void clear_screen(void);
-int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
-int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
+int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes);
 void update_cursor(int x, int y);
 
 
