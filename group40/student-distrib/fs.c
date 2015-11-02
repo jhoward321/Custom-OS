@@ -38,9 +38,9 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 	if(index > boot_block->total_dirs || index < 0 || dentry == NULL)
 		return -1;
-	
+
 	memcpy(dentry, &boot_block->dir_entries[index], DENTRY_SIZE);
-/*	memcpy(dentry->file_name, boot_block->dir_entries[index].file_name, MAX_FILE_MAX_FILE_NAME_LENGTHGTH);
+/*	memcpy(dentry->file_name, boot_block->dir_entries[index].file_name, MAX_FILE_NAME_LENGTH);
 	dentry->file_type = boot_block->dir_entries[index].file_type;
 	dentry->inode_number = boot_block->dir_entries[index].inode_number;*/
 
@@ -49,6 +49,26 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 }
 
 
+uint32_t read_dir(uint8_t* buf){
+
+	dentry_t temp;
+
+	int index = 0;
+	int i, j;
+
+	for(i=0; i<MAX_NUM_FILES; i++){
+		if(read_dentry_by_index(i, &temp) == 0){
+			for(j=0; j<32; j++){
+				buf[index++] = temp.file_name[j];
+			}
+			buf[index++] ='\n';
+		}
+	}
+
+	return index;
+
+}
+
 //copy data from a file from at offset, of length bytes, and store in buf
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
 	if(inode > boot_block->total_inodes || inode < 0 || buf == NULL)
@@ -56,9 +76,9 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 	//address of the current inode where data will be extracted
 	uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
-	//first element of the inode structure gives the length of the file to be read 
+	//first element of the inode structure gives the length of the file to be read
 	uint32_t file_length = *curr_inode_address;
-	//check to see if the offset points to outside of the file's size 
+	//check to see if the offset points to outside of the file's size
 	if(file_length < offset){
 		return -1;
 	}
@@ -70,7 +90,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	//printf("Data block base address = %d\n",data_block_0_address);
 
 	//address of current data block number to be read (list of data block numbers are stored in the inode)
-	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + offset/BYTES_PER_BLOCK + 4);
+	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + offset/BYTES_PER_BLOCK + sizeof(uint32_t)); 	// 4 = sizeof(int)
 	//printf("Current data block index address = %d\n", curr_data_block_index_addr);
 	//current data block number to be read (stored in the inode)
 	uint32_t curr_data_block_index = *curr_data_block_index_addr;
@@ -86,7 +106,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 	//variable to check how far in the file we are reading
 	byte_position = offset + read_count;
-	
+
 	while(length > read_count){
 
 		//read the byte from the corresponding offset of the current data block
@@ -120,7 +140,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 uint32_t read_file_length(uint32_t inode){
 	//address of the current inode where data will be extracted
 	uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
-	//first element of the inode structure gives the length of the file to be read 
+	//first element of the inode structure gives the length of the file to be read
 	uint32_t file_length = *curr_inode_address;
 	return file_length;
 }
@@ -144,4 +164,3 @@ int32_t close_file(int32_t fd){
 
 	return 0;
 }
-
