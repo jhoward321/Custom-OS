@@ -192,7 +192,7 @@ entry (unsigned long magic, unsigned long addr)
 	//2: ls: print directory contents
 	//3: test rtc
 
-	switch (0) {
+	switch (4) {
 		case 1 :{//read from file
 			uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";//enter file name here to be displayed
 			uint32_t read_count;
@@ -235,12 +235,16 @@ entry (unsigned long magic, unsigned long addr)
 				disable_irq(RTC_IRQ);
 			}
 			break;
-		case 4:{
+		case 4:{	//test terminal_read
+			int nbytes = 20;
+			terminal_read(buf, nbytes);
+			printf("testing terminal_read: " );
+			for(i=0; i<nbytes; i++)
+				printf("%c", buf[i]);
+			printf("\n" );
 
-			//terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
-
-
-
+			terminal_write((uint8_t *)"testing terminal_write\n", 25);
+			
 		}
 
 		}

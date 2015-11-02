@@ -73,26 +73,33 @@ void clear_screen(void){
 }
 //read data from keyboard, return number of bytes read, read from terminanted line (enter)
 //calling terminal read should give me a clear buffer
-int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
+int32_t terminal_read(uint8_t* buf, int32_t nbytes){
 	if(buf == 0 || nbytes < 0)
 		return -1;
 	//wait until ready to read
 	while(!kb_buf_read){}
 	int readbytes;
-	if(nbytes > kbbuf_index){
-		int i;
-		for(i = 0; i < kbbuf_index; i++){
-			buf[i] = kb_buffer[i];
-		}
-		readbytes = i;
-	}
-	else{
-		int i;
-		for(i = 0; i < nbytes; i++){
-			buf[i] = kb_buffer[i];
-		}
-		readbytes = i;
-	}
+	cli();
+
+	memcpy(buf, kb_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN);
+	// if(nbytes > kbbuf_index){
+	// 	int i;
+	// 	for(i = 0; i < kbbuf_index; i++){
+	// 		buf[i] = kb_buffer[i];
+	// 	}
+	// 	readbytes = i;
+	// }
+	// else{
+	// 	int i;
+	// 	for(i = 0; i < nbytes; i++){
+	// 		buf[i] = kb_buffer[i];
+	// 	}
+	// 	readbytes = i;
+	// }
+	uint8_t i;
+	for(i=0; i<MAXBUFLEN; i++)
+		kb_buffer[i] = '\0';
+	sti();
 	//after reading need to reset buffer index and ready to read
 	kbbuf_index = 0;
 	kb_buf_read = 0;
@@ -100,14 +107,16 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 	return readbytes;
 }
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
-int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes){
+int32_t terminal_write(const uint8_t* buf, int32_t nbytes){
 	int byteswritten = 0;
 	if((buf == NULL) || (nbytes < 0))
 		return -1;
 	int i;
+	cli();
 	for(i = 0; i< nbytes; i++){
 		putc(buf[i]); //not sure this is right
 	}
+	sti();
 	return byteswritten;
 }
 
@@ -134,9 +143,8 @@ void keyboard_init(void){
 
 	int j;
 	for(j = 0; j < MAXBUFLEN; j++){
-			kb_buffer[j] = 0;
+			kb_buffer[j] = '\0';
 	}
-
 	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
 	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
