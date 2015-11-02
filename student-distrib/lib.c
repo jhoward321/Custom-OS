@@ -162,7 +162,7 @@ format_char_switch:
 * int32_t puts(int8_t* s);
 *   Inputs: int_8* s = pointer to a string of characters
 *   Return Value: Number of bytes written
-*	Function: Output a string to the console 
+*	Function: Output a string to the console
 */
 
 int32_t
@@ -181,7 +181,7 @@ puts(int8_t* s)
 * void putc(uint8_t c);
 *   Inputs: uint_8* c = character to print
 *   Return Value: void
-*	Function: Output a character to the console 
+*	Function: Output a character to the console
 */
 
 void
@@ -197,7 +197,24 @@ putc(uint8_t c)
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
+    if(screen_y == NUM_ROWS)
+        scroll_screen();
 }
+
+/*
+ * when called the video memory is shifted up by one character line
+ */
+void scroll_screen(){
+        memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1))<<1);
+        uint8_t i;
+        for(i=0; i<NUM_COLS; i++)//last row of video memory is not cleared
+                *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS-1) + i) << 1)) = ' ';      //set the last row to spaces
+
+        screen_y--;                     //decrement the y screen location
+}
+
+
+
 
 /*
 * int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
@@ -475,11 +492,11 @@ memmove(void* dest, const void* src, uint32_t n)
 *   Inputs: const int8_t* s1 = first string to compare
 *			const int8_t* s2 = second string to compare
 *			uint32_t n = number of bytes to compare
-*	Return Value: A zero value indicates that the characters compared 
+*	Return Value: A zero value indicates that the characters compared
 *					in both strings form the same string.
-*				A value greater than zero indicates that the first 
-*					character that does not match has a greater value 
-*					in str1 than in str2; And a value less than zero 
+*				A value greater than zero indicates that the first
+*					character that does not match has a greater value
+*					in str1 than in str2; And a value less than zero
 *					indicates the opposite.
 *	Function: compares string 1 and string 2 for equality
 */
