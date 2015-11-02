@@ -55,14 +55,29 @@ need a open, read, write, close function
 //#define KB_PORT 0x60 moved to header but left here for reference
 uint8_t kbbuf_index;
 uint8_t kb_buffer[MAXBUFLEN];
-//uint8_t out_buffer[MAXBUFLEN];
+uint8_t out_buffer[MAXBUFLEN];
 uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
+//typedef enum {false, true} bool;
 
-//dont need this anymore, can just use screenx/y in lib.c
-void clear_buffer(void){
-
+//true if want to clear keyboard buffer, false if want to clear out buffer
+//true is 1, false is 0
+void clear_buffer(int clear_keyboard){
+	int i;
+	cli();
+	if(clear_keyboard){
+		for(i = 0; i < MAXBUFLEN; i++)
+			kb_buffer[i] = '\0';
+		kbbuf_index = 0; //reset index pointer
+	}
+	else{
+		for(i = 0; i < MAXBUFLEN; i++){
+			out_buffer[i] = '\0';
+		}
+		kb_buf_read = 0; //reset flag
+	}
+	sti();
 }
 
 void clear_screen(void){
@@ -70,6 +85,7 @@ void clear_screen(void){
 	screen_x = 0;
 	screen_y = 0;
 	update_cursor(screen_x, screen_y);
+	clear_buffer(1);
 }
 //read data from keyboard, return number of bytes read, read from terminanted line (enter)
 //calling terminal read should give me a clear buffer
@@ -81,7 +97,8 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes){
 	int readbytes;
 	cli();
 
-	memcpy(buf, kb_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN);
+	//memcpy(buf, kb_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN); 
+	memcpy(buf, out_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN); //this might need to be < index instead
 	// if(nbytes > kbbuf_index){
 	// 	int i;
 	// 	for(i = 0; i < kbbuf_index; i++){
@@ -96,12 +113,14 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes){
 	// 	}
 	// 	readbytes = i;
 	// }
-	uint8_t i;
-	for(i=0; i<MAXBUFLEN; i++)
-		kb_buffer[i] = '\0';
+
+	//uint8_t i;
+	//for(i=0; i<MAXBUFLEN; i++)
+	//	kb_buffer[i] = '\0';
 	sti();
+	clear_buffer(0);
 	//after reading need to reset buffer index and ready to read
-	kbbuf_index = 0;
+	//kbbuf_index = 0;
 	kb_buf_read = 0;
 
 	return readbytes;
@@ -113,11 +132,20 @@ int32_t terminal_write(const uint8_t* buf, int32_t nbytes){
 		return -1;
 	int i;
 	cli();
-	for(i = 0; i< nbytes; i++){
+	for(i = 0; i < nbytes; i++){
 		putc(buf[i]); //not sure this is right
 	}
 	sti();
 	return byteswritten;
+}
+
+//shouldn't ever get called but needs to exist... returns 0
+int32_t terminal_open(void){
+	return 0;
+}
+//same as terminal_open
+int32_t terminal_close(void){
+	return 0;
 }
 
 //http://wiki.osdev.org/Text_Mode_Cursor
@@ -197,9 +225,18 @@ void keyboard_handler(void){
 					keyboard_status.capslock = 0;
 				break;
 			case ENTER:
-				kb_buffer[kbbuf_index] = '\n';
-				kbbuf_index = 0;
+				cli();
+				kb_buffer[kbbuf_index] = '\n'; //not sure if we need/want this
+				
 				putc('\n');
+				//copy keyboard buffer to out_buffer for reading
+				int i;
+				for(i = 0; i < kbbuf_index; i++){
+					out_buffer[i] = kb_buffer[i];
+				}
+				sti();
+				//kbbuf_index = 0;
+				clear_buffer(1);
 				kb_buf_read = 1;
 				update_cursor(screen_x, screen_y);
 				break;
@@ -234,8 +271,8 @@ void keyboard_handler(void){
 					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
 						clear_screen();
-						kbbuf_index = 0;
-
+						clear_buffer(1);
+						//kbbuf_index = 0;
 						break;
 					}
 					//no shift no caps

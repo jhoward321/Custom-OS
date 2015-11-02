@@ -243,7 +243,7 @@ entry (unsigned long magic, unsigned long addr)
 				printf("%c", buf[i]);
 			printf("\n" );
 
-			terminal_write((uint8_t *)"testing terminal_write\n", 25);
+			terminal_write((uint8_t *)"testing terminal_write", 25);
 			
 		}
 
