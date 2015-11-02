@@ -85,15 +85,15 @@ entry (unsigned long magic, unsigned long addr)
 	}
 
 	/* Is the section header table of ELF valid? */
-	if (CHECK_FLAG (mbi->flags, 5))
-	{
-		elf_section_header_table_t *elf_sec = &(mbi->elf_sec);
-
-		//printf ("elf_sec: num = %u, size = 0x%#x,"
-				// " addr = 0x%#x, shndx = 0x%#x\n",
-				// (unsigned) elf_sec->num, (unsigned) elf_sec->size,
-				// (unsigned) elf_sec->addr, (unsigned) elf_sec->shndx);
-	}
+	// if (CHECK_FLAG (mbi->flags, 5))
+	// {
+	// 	elf_section_header_table_t *elf_sec = &(mbi->elf_sec);
+	//
+	// 	//printf ("elf_sec: num = %u, size = 0x%#x,"
+	// 			// " addr = 0x%#x, shndx = 0x%#x\n",
+	// 			// (unsigned) elf_sec->num, (unsigned) elf_sec->size,
+	// 			// (unsigned) elf_sec->addr, (unsigned) elf_sec->shndx);
+	// }
 
 	// /* Are mmap_* valid? */
 	// if (CHECK_FLAG (mbi->flags, 6))
@@ -170,13 +170,12 @@ entry (unsigned long magic, unsigned long addr)
 	//unmask needed irq lines
 	enable_irq(KEYBOARD_IRQ);			//enable keyboard
 	enable_irq(SLAVE_IRQ);			//enable slave irq
-	enable_irq(RTC_IRQ);			//enable RTC
+	// enable_irq(RTC_IRQ);			//enable RTC
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
-	//init RTC
-	rtc_init();
-
+	rtc_init();									//init RTC
+	keyboard_init();						//init the keyboard
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -184,102 +183,67 @@ entry (unsigned long magic, unsigned long addr)
 	sti();
 
 
-	//printf("Enabling Interrupts\n");
-
-	//disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
-
-	//int32_t i = 0;
-	//uint32_t* ptr = NULL;
-	//i = *ptr;
-	//disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
-
-
-//also for testing exceptions with variable i:
-	// uint32_t i = 0;
-	//uint32_t* ptr = NULL;
-	//i = *ptr;			//use this line to test page fault
-	// i++;
-	//i= 1/0;			//use this line to test divide by zero
-
 
 	//=========START FILE SYSTEM TEST CODE=========
-
-
-	uint8_t file_names_buf[10000];
 	uint8_t buf[50000];
 	uint32_t i;
-	uint8_t file_name[FILE_NAME_STRING_LEN] = "fish";
+	//1: test read from file
+	//2: ls: print directory contents
+	//3: test rtc
 
+	switch (3) {
+		case 1 :{//read from file
+			uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";//enter file name here to be displayed
+			uint32_t read_count;
+			dentry_t temp;
 
-	// uint8_t buf[10000];
-	// uint32_t i;
-	// uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";
+			read_dentry_by_name(file_name, &temp);
 
-	// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
-	// 	printf("%c",file_name[i]);
+			for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
+				printf("%c",file_name[i]);
+			printf("\n");
 
-	// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
-	// 	printf("%c",file_name[i]);
+			uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
+			uint32_t file_length = *curr_inode_address;
 
-	printf("\n");
-	dentry_t temp;
-	uint32_t read_count;
+			printf("File length = %d\n",file_length);
 
-	// printf("\n");
-	// dentry_t temp;
-	// uint32_t read_count;
+			read_count = read_data(temp.inode_number, 0, buf, file_length);
 
+			for (i=0; i<file_length; i++)
+				printf("%c",buf[i]);
 
-	// read_dentry_by_name(file_name, &temp);
-
-
-	// // uint32_t retval = read_dentry_by_name(file_name, &temp);
-	// // printf("Retval = %d\n",retval);
-
-	// uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
-	// uint32_t file_length = *curr_inode_address;
-	// read_count = read_data(temp.inode_number, 0, buf, file_length);
-
-
-	// printf("File Length = %d\n",file_length);
-	// printf("Read count = %d\n",read_count);
-	// printf("Inode number = %d\n", temp.inode_number);
-	// printf("%s\n",file_name);
-	// printf("File length = %d\n",file_length);
-
-
-	// for (i=0; i<file_length; i++){
-	// 	printf("%c",buf[i]);
-	// }
-
-	// int j;
-
-	//==READ DIRECTORY CODE START
-		int index;
-		printf("Reading directory:\n");
-		index = read_dir(file_names_buf);
-		for(i=0; i<index; i++){
-			printf("%c",file_names_buf[i]);
+			break;
 		}
-	//==READ DIRECTORY CODE END
 
-	//
-	// for(j=0; j<num_files; j++){
-	// 	for(i=0; i<32; i++){
-	// 		printf("%c",buf[i]);
-	// 	}
-	// 	printf("\n");
-	// }
+		case 2 :{	//ls
+			int index;
+			printf("Reading directory:\n");
+			index = read_dir(buf);
+			for(i=0; i<index; i++){
+				printf("%c",buf[i]);
+			}
+			break;
+		}
 
+		case 3 :{	//rtc
+			enable_irq(RTC_IRQ);
+			int8_t ret = rtc_write(8);
+			if(ret < 0){
+				printf("invalid rtc freq\n");
+				disable_irq(RTC_IRQ);
+			}
+			break;
 
-	//==========END FILE SYSTEM TEST CODE==========
-
+		}
+		default:
+				;
+	}
 
 
 
 
 	/* Execute the first program (`shell') ... */
-	keyboard_init();
 
 	while(1){
 	}

@@ -37,14 +37,14 @@ void rtc_init(void){
 	outb(RTC_REG_A, RTC_CMD);
 	prev = inb(RTC_MEM);
 	outb(RTC_REG_A, RTC_CMD);
-	outb((prev & RTC_MASK2) | rate, RTC_MEM);	
+	outb((prev & RTC_MASK2) | rate, RTC_MEM);
 	sti();
-	enable_irq(RTC_IRQ);
+	// enable_irq(RTC_IRQ);
 }
 //will need an interrupt handler is in exceptions.c
 
 //return 0 after an interrupt has occurred
-int32_t rtc_read(char* buf, int32_t nbytes){
+int32_t rtc_read(){
 	interrupt_flag = 1;
 
 	while(interrupt_flag); //wait for interrupt to occur and then return 0
@@ -52,16 +52,9 @@ int32_t rtc_read(char* buf, int32_t nbytes){
 	return 0;
 }
 
-int32_t rtc_write(int32_t* buf, int32_t nbytes){
+int32_t rtc_write(uint32_t freq){
 	int8_t rate;
-	int32_t freq;
 	char prev;
-
-	//nbytes must be 4
-	if(nbytes != 4 || buf == NULL)
-		return -1;
-
-	freq = *buf;
 
 	if(freq > MAX_FREQ || freq < MIN_FREQ)
 		return -1;
@@ -108,18 +101,18 @@ int32_t rtc_write(int32_t* buf, int32_t nbytes){
 	outb(RTC_REG_A, RTC_CMD);
 	outb((prev & RTC_MASK2) | rate, RTC_MEM);
 	sti();
-	return nbytes;
+	return 4;
 }
 
 
-/*The open system call provides access to the file system. The call should find the directory 
-entry corresponding to thenamed file, allocate an unused file descriptor, and set up any data 
-necessary to handle the given type of file (directory,RTC device, or regular file). If the 
+/*The open system call provides access to the file system. The call should find the directory
+entry corresponding to thenamed file, allocate an unused file descriptor, and set up any data
+necessary to handle the given type of file (directory,RTC device, or regular file). If the
 named file does not exist or no descriptors are free, the call returns -1.
 */
 //init rtc to 2hz and return 0
 int32_t rtc_open(void){
-	//rtc_init();
+	rtc_init();
 	return 0;
 }
 
