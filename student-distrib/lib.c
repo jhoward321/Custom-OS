@@ -190,17 +190,17 @@ putc(uint8_t c)
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x=0;
-    } else {
         if(screen_y == NUM_ROWS)
-                scroll_screen();    
+            scroll_screen();
+    } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
+        if(screen_y + (screen_x / NUM_COLS) == NUM_ROWS)
+                scroll_screen();
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
         screen_x %= NUM_COLS;
     }
-    if(screen_y == NUM_ROWS)
-        scroll_screen();
 }
 
 /*

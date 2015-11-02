@@ -56,13 +56,11 @@ need a open, read, write, close function
 uint8_t kbbuf_index;
 uint8_t kb_buffer[MAXBUFLEN];
 //uint8_t out_buffer[MAXBUFLEN];
-//uint terminal_buffer[TERMINAL_BUF_LEN]; //terminal buffer
 uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
-//uint8_t terminal_index; //tracks current terminal number
+
 
 //dont need this anymore, can just use screenx/y in lib.c
-//uint16_t cursor_x, cursor_y; //cursor position, 1 for each terminal
 void clear_buffer(void){
 
 }
@@ -116,7 +114,7 @@ int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes){
 //http://wiki.osdev.org/Text_Mode_Cursor
 //should only call when a line/string is complete
 void update_cursor(int x, int y){
-	unsigned short position = (y * NUM_CALLS) + x;
+	unsigned short position = (y * 80) + x;
 	//cursor LOW port to vga index register
 	outb(0x0F, VGA1);
 	outb((unsigned char)(position & 0xFF), VGA2);
@@ -133,21 +131,17 @@ void keyboard_init(void){
 	keyboard_status.capslock = 0;
 	kb_buf_read = 0;
 	kbbuf_index = 0;
-	//cursor_x = 0;
-	//cursor_y = 0;
 
 	int j;
 	for(j = 0; j < MAXBUFLEN; j++){
 			kb_buffer[j] = 0;
 	}
 
-	//terminal_index = 0; //initialize current terminal to the 1st one
 	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
 	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
 	//will test interrupt handler first to see if this is necessary
-	//kb_index = 0;
-	//uint8_t  temp = kb_index ;
+
 }
 
 //https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
@@ -160,14 +154,6 @@ void keyboard_init(void){
 //handler fills the keyboard buffer and then prints it to terminal
 void keyboard_handler(void){
 	uint8_t scancode, keycode;
-	//uint8_t status;
-
-	//read keyboard status
-	//status = inb(KB_STATUS);
-	//if(kbbuf_index = MAXBUFLEN)
-	//	kbbuf_index = 0;
-
-
 	if(inb(KB_STATUS) & KB_STATUS_MASK){
 		scancode = inb(KB_PORT);
 
@@ -204,45 +190,30 @@ void keyboard_handler(void){
 				break;
 			case ENTER:
 				kb_buffer[kbbuf_index] = '\n';
-				//kbbuf_index++;
 				kbbuf_index = 0;
 				putc('\n');
 				kb_buf_read = 1;
-				//cursor_y++;
-				//cursor_x = 0;
 				update_cursor(screen_x, screen_y);
 				break;
 			case BACKSPACE:
-				// if(kbbuf_index == 0){
-				// 	break;
-				// }
-				if(kbbuf_index > 0){ //&& kbbuf_index < MAXBUFLEN){//(screen_x > 0){
-
+				if(kbbuf_index > 0){
 					kbbuf_index--;
 					kb_buffer[kbbuf_index] = '\0';
 
 					if(screen_x == 0 && screen_y > 0){
-						screen_x = 78;
+						screen_x = 79;
 						screen_y--;
 						putc(' ');
-						screen_x = 78;
+						screen_x = 79;
+						screen_y--;
 					}
 					else{
 						screen_x--;
 						putc(' ');
 						screen_x--;//have to decrement cursor again after adding space
 					}
-					// if(kbbuf_index > 0){
-					// 	kb_buffer[kbbuf_index] = '\0';
-					// 	kbbuf_index--;
-					// }
+
 					update_cursor(screen_x, screen_y);
-					//break;
-					// *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-     //   				 *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
-     //    			screen_x++;
-     //    			screen_x %= NUM_COLS;
-     //    			screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
 				}
 				break;
 
@@ -280,15 +251,6 @@ void keyboard_handler(void){
 					if(kbbuf_index < MAXBUFLEN && keycode){
 						kb_buffer[kbbuf_index] = keycode;
 						kbbuf_index++;
-						//cursor_x ++;
-						//if(screen_x == 80){
-						if(kbbuf_index == 80){
-							//cli();
-							screen_x = 0;
-							screen_y++;
-							//sti();
-							update_cursor(screen_x, screen_y);
-						}
 						putc(keycode);
 						update_cursor(screen_x, screen_y);
 					}
@@ -297,16 +259,6 @@ void keyboard_handler(void){
 		}
 	}
 
-
-
-	//have to check high order bit to check if key is up or down (and with x80 to get high order bit)
-	//if 0 the key is down, if 1 its been released
-	// if(!(scancode & KB_PRESS_MASK)){
-	// 	keycode = KBkeys[scancode];
-	// 	//kb_in_buffer[kb_index] = keycode;
-	// 	//kb_index++;
-	// 	putc(keycode);
-	// }
 	send_eoi(KEYBOARD_IRQ); //done with interrupt
 
 
