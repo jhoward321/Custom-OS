@@ -182,8 +182,8 @@ static const uint8_t KBkeys[KBKEY_ARRAY][MAXBUFLEN] =
 void keyboard_init(void); //not sure if this is even needed
 void keyboard_handler(void); //exception handler for keyboard
 void clear_screen(void);
-int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
-int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes);
+int32_t terminal_read(uint8_t* buf, int32_t nbytes);
+int32_t terminal_write(const uint8_t* buf, int32_t nbytes);
 void update_cursor(int x, int y);
 
 
