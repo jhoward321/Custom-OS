@@ -213,14 +213,24 @@ void keyboard_handler(void){
 				update_cursor(screen_x, screen_y);
 				break;
 			case BACKSPACE:
-				if(screen_x > 0){
-					screen_x--;
-					putc(' ');
-					screen_x--;//have to decrement cursor again after adding space
-					if(kbbuf_index > 0){
-						kb_buffer[kbbuf_index] = '\0';
-						kbbuf_index--;
+				if(kbbuf_index > 0){//(screen_x > 0){
+					kb_buffer[kbbuf_index] = '\0';
+					kbbuf_index--;
+					if(screen_x == 0 && screen_y > 0){
+						screen_x = 79;
+						screen_y--;
+						putc(' ');
+						screen_x = 79;
 					}
+					else{
+						screen_x--;
+						putc(' ');
+						screen_x--;//have to decrement cursor again after adding space
+					}
+					// if(kbbuf_index > 0){
+					// 	kb_buffer[kbbuf_index] = '\0';
+					// 	kbbuf_index--;
+					// }
 					update_cursor(screen_x, screen_y);
 					break;
 					// *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
@@ -265,12 +275,13 @@ void keyboard_handler(void){
 						kb_buffer[kbbuf_index] = keycode;
 						kbbuf_index++;
 						//cursor_x ++;
-						if(screen_x == 79){
+						//if(screen_x == 80){
+						if(kbbuf_index == 81){
 							//cli();
 							screen_x = 0;
 							screen_y++;
 							//sti();
-							//update_cursor(screen_x, screen_y);
+							update_cursor(screen_x, screen_y);
 						}
 						putc(keycode);
 						update_cursor(screen_x, screen_y);
