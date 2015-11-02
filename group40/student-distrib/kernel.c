@@ -176,6 +176,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	rtc_init();									//init RTC
 	keyboard_init();						//init the keyboard
+	clear_screen();
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -234,6 +235,13 @@ entry (unsigned long magic, unsigned long addr)
 				disable_irq(RTC_IRQ);
 			}
 			break;
+		case 4:{
+
+			//terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
+
+
+
+		}
 
 		}
 		default:
