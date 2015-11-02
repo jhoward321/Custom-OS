@@ -166,7 +166,7 @@ void keyboard_handler(void){
 	//status = inb(KB_STATUS);
 	//if(kbbuf_index = MAXBUFLEN)
 	//	kbbuf_index = 0;
-	
+
 
 	if(inb(KB_STATUS) & KB_STATUS_MASK){
 		scancode = inb(KB_PORT);
@@ -220,7 +220,7 @@ void keyboard_handler(void){
 
 					kbbuf_index--;
 					kb_buffer[kbbuf_index] = '\0';
-					
+
 					if(screen_x == 0 && screen_y > 0){
 						screen_x = 78;
 						screen_y--;
