@@ -116,7 +116,7 @@ int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes){
 //http://wiki.osdev.org/Text_Mode_Cursor
 //should only call when a line/string is complete
 void update_cursor(int x, int y){
-	unsigned short position = (y * 80) + x;
+	unsigned short position = (y * NUM_CALLS) + x;
 	//cursor LOW port to vga index register
 	outb(0x0F, VGA1);
 	outb((unsigned char)(position & 0xFF), VGA2);
