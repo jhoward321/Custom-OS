@@ -186,7 +186,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	//printf("Enabling Interrupts\n");
 
-	disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
+	//disable_irq(RTC_IRQ); 				//comment out for test RTC video mem
 
 	//int32_t i = 0;
 	//uint32_t* ptr = NULL;
@@ -204,36 +204,36 @@ entry (unsigned long magic, unsigned long addr)
 
 	//=========START FILE SYSTEM TEST CODE=========
 	
-	uint8_t buf[10000];
-	uint32_t i;
-	uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";
+	// uint8_t buf[10000];
+	// uint32_t i;
+	// uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";
 	
-	for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
-		printf("%c",file_name[i]);
+	// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
+	// 	printf("%c",file_name[i]);
 
-	printf("\n");
-	dentry_t temp;
-	uint32_t read_count;
+	// printf("\n");
+	// dentry_t temp;
+	// uint32_t read_count;
 
-	read_dentry_by_name(file_name, &temp);
+	// read_dentry_by_name(file_name, &temp);
 
 
-	// uint32_t retval = read_dentry_by_name(file_name, &temp);
-	// printf("Retval = %d\n",retval);
+	// // uint32_t retval = read_dentry_by_name(file_name, &temp);
+	// // printf("Retval = %d\n",retval);
 
-	uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
-	uint32_t file_length = *curr_inode_address;
-	read_count = read_data(temp.inode_number, 0, buf, file_length);
+	// uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
+	// uint32_t file_length = *curr_inode_address;
+	// read_count = read_data(temp.inode_number, 0, buf, file_length);
 	
-	// printf("File Length = %d\n",file_length);
-	// printf("Read count = %d\n",read_count);
-	// printf("Inode number = %d\n", temp.inode_number);
-	// printf("%s\n",file_name);
-	printf("File length = %d\n",file_length);
+	// // printf("File Length = %d\n",file_length);
+	// // printf("Read count = %d\n",read_count);
+	// // printf("Inode number = %d\n", temp.inode_number);
+	// // printf("%s\n",file_name);
+	// printf("File length = %d\n",file_length);
 
-	for (i=0; i<file_length; i++){
-		printf("%c",buf[i]);
-	}
+	// for (i=0; i<file_length; i++){
+	// 	printf("%c",buf[i]);
+	// }
 
 
 	//==========END FILE SYSTEM TEST CODE==========		
