@@ -55,7 +55,7 @@ need a open, read, write, close function
 //#define KB_PORT 0x60 moved to header but left here for reference
 uint8_t kbbuf_index;
 uint8_t kb_buffer[MAXBUFLEN];
-uint8_t out_buffer[MAXBUFLEN];
+//uint8_t out_buffer[MAXBUFLEN];
 //uint terminal_buffer[TERMINAL_BUF_LEN]; //terminal buffer
 uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
@@ -63,7 +63,9 @@ kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
 //dont need this anymore, can just use screenx/y in lib.c
 //uint16_t cursor_x, cursor_y; //cursor position, 1 for each terminal
+void clear_buffer(void){
 
+}
 
 void clear_screen(void){
 	clear();
@@ -72,6 +74,7 @@ void clear_screen(void){
 	update_cursor(screen_x, screen_y);
 }
 //read data from keyboard, return number of bytes read, read from terminanted line (enter)
+//calling terminal read should give me a clear buffer
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes){
 	if(buf == 0 || nbytes < 0)
 		return -1;
@@ -214,8 +217,10 @@ void keyboard_handler(void){
 					screen_x--;
 					putc(' ');
 					screen_x--;//have to decrement cursor again after adding space
-					if(kbbuf_index > 0)
+					if(kbbuf_index > 0){
+						kb_buffer[kbbuf_index] = '\0';
 						kbbuf_index--;
+					}
 					update_cursor(screen_x, screen_y);
 					break;
 					// *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
@@ -234,6 +239,8 @@ void keyboard_handler(void){
 					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
 						clear_screen();
+						kbbuf_index = 0;
+
 						break;
 					}
 					//no shift no caps
@@ -258,6 +265,13 @@ void keyboard_handler(void){
 						kb_buffer[kbbuf_index] = keycode;
 						kbbuf_index++;
 						//cursor_x ++;
+						if(screen_x == 80){
+							cli();
+							screen_x = 0;
+							screen_y++;
+							sti();
+							//update_cursor(screen_x, screen_y);
+						}
 						putc(keycode);
 						update_cursor(screen_x, screen_y);
 					}
