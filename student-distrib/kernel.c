@@ -203,17 +203,32 @@ entry (unsigned long magic, unsigned long addr)
 
 
 	//=========START FILE SYSTEM TEST CODE=========
-	
+
+
+	uint8_t file_names_buf[10000];
+	uint8_t buf[50000];
+	uint32_t i;
+	uint8_t file_name[FILE_NAME_STRING_LEN] = "fish";
+
+
 	// uint8_t buf[10000];
 	// uint32_t i;
 	// uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";
-	
+
 	// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
 	// 	printf("%c",file_name[i]);
+
+	// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
+	// 	printf("%c",file_name[i]);
+
+	printf("\n");
+	dentry_t temp;
+	uint32_t read_count;
 
 	// printf("\n");
 	// dentry_t temp;
 	// uint32_t read_count;
+
 
 	// read_dentry_by_name(file_name, &temp);
 
@@ -224,19 +239,40 @@ entry (unsigned long magic, unsigned long addr)
 	// uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
 	// uint32_t file_length = *curr_inode_address;
 	// read_count = read_data(temp.inode_number, 0, buf, file_length);
-	
-	// // printf("File Length = %d\n",file_length);
-	// // printf("Read count = %d\n",read_count);
-	// // printf("Inode number = %d\n", temp.inode_number);
-	// // printf("%s\n",file_name);
+
+
+	// printf("File Length = %d\n",file_length);
+	// printf("Read count = %d\n",read_count);
+	// printf("Inode number = %d\n", temp.inode_number);
+	// printf("%s\n",file_name);
 	// printf("File length = %d\n",file_length);
+
 
 	// for (i=0; i<file_length; i++){
 	// 	printf("%c",buf[i]);
 	// }
 
+	// int j;
 
-	//==========END FILE SYSTEM TEST CODE==========		
+	//==READ DIRECTORY CODE START
+		int index;
+		printf("Reading directory:\n");
+		index = read_dir(file_names_buf);
+		for(i=0; i<index; i++){
+			printf("%c",file_names_buf[i]);
+		}
+	//==READ DIRECTORY CODE END
+
+	//
+	// for(j=0; j<num_files; j++){
+	// 	for(i=0; i<32; i++){
+	// 		printf("%c",buf[i]);
+	// 	}
+	// 	printf("\n");
+	// }
+
+
+	//==========END FILE SYSTEM TEST CODE==========
 
 
 
