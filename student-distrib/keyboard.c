@@ -213,14 +213,19 @@ void keyboard_handler(void){
 				update_cursor(screen_x, screen_y);
 				break;
 			case BACKSPACE:
-				if(kbbuf_index > 0){//(screen_x > 0){
-					kb_buffer[kbbuf_index] = '\0';
+				// if(kbbuf_index == 0){
+				// 	break;
+				// }
+				if(kbbuf_index > 0){ //&& kbbuf_index < MAXBUFLEN){//(screen_x > 0){
+
 					kbbuf_index--;
+					kb_buffer[kbbuf_index] = '\0';
+					
 					if(screen_x == 0 && screen_y > 0){
-						screen_x = 79;
+						screen_x = 78;
 						screen_y--;
 						putc(' ');
-						screen_x = 79;
+						screen_x = 78;
 					}
 					else{
 						screen_x--;
@@ -232,13 +237,14 @@ void keyboard_handler(void){
 					// 	kbbuf_index--;
 					// }
 					update_cursor(screen_x, screen_y);
-					break;
+					//break;
 					// *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
      //   				 *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
      //    			screen_x++;
      //    			screen_x %= NUM_COLS;
      //    			screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
 				}
+				break;
 
 			//still need enter and backspace
 			//process scancode and add correct character to buffer
@@ -276,7 +282,7 @@ void keyboard_handler(void){
 						kbbuf_index++;
 						//cursor_x ++;
 						//if(screen_x == 80){
-						if(kbbuf_index == 81){
+						if(kbbuf_index == 80){
 							//cli();
 							screen_x = 0;
 							screen_y++;

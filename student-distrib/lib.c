@@ -197,8 +197,8 @@ putc(uint8_t c)
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
-    if(screen_y == NUM_ROWS)
-        scroll_screen();
+    //if(screen_y == NUM_ROWS)
+    //    scroll_screen();
 }
 
 /*
