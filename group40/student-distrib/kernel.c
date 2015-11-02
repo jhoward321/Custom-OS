@@ -191,7 +191,7 @@ entry (unsigned long magic, unsigned long addr)
 	//2: ls: print directory contents
 	//3: test rtc
 
-	switch (3) {
+	switch (0) {
 		case 1 :{//read from file
 			uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";//enter file name here to be displayed
 			uint32_t read_count;

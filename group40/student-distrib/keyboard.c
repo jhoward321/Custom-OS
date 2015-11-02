@@ -265,11 +265,11 @@ void keyboard_handler(void){
 						kb_buffer[kbbuf_index] = keycode;
 						kbbuf_index++;
 						//cursor_x ++;
-						if(screen_x == 80){
-							cli();
+						if(screen_x == 79){
+							//cli();
 							screen_x = 0;
 							screen_y++;
-							sti();
+							//sti();
 							//update_cursor(screen_x, screen_y);
 						}
 						putc(keycode);
