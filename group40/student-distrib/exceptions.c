@@ -197,6 +197,56 @@ void rtc_handler(){	//RTC
 	interrupt_flag = 0; //clear flag now that interrupt is over
 }
 
-void ex_128(){	//system call
-	printf("system call\n");
+
+
+
+
+int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
+	printf("halt\n" );	//just for testing
+	return -1;
+}
+
+int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
+
+	return -1;
+}
+
+int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes){
+
+	return -1;
+}
+
+int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t garbage3){
+
+	return -1;
+}
+
+int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3){
+
+	return -1;
 }

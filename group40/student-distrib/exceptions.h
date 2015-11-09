@@ -33,10 +33,21 @@ void ex_17();
 void ex_18();
 void ex_19();
 
-extern void ex_33(); //keyboard
-extern void ex_40(); //rtc
+void ex_33(); //keyboard
+void ex_40(); //rtc
+void ex_128();
 void rtc_handler(); //rtc
 
-void ex_128(); //rtc
+//10 system call all have 3 arguments but some are not needed so they are garbage
+extern int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3);
+extern int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3);
+extern int32_t sys_read(int32_t fd, void* buf, int32_t nbytes);
+extern int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3);
+extern int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3);
+extern int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3);
+extern int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3);
+extern int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t garbage3);
+extern int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3);
 
 #endif
