@@ -6,6 +6,29 @@
 #include "lib.h"
 #include "x86_desc.h"
 
+typedef struct operations_table_t {
+	int32_t (*read)(int32_t fd, void* buf, int32_t length);
+	int32_t (*write)(int32_t fd, const void* buf, int32_t nbytes);
+	int32_t (*open)(int32_t fd);
+	int32_t (*close) (int32_t fd);
+} operations_table_t;
+
+typedef struct file_descriptor_t{
+	operations_table_t* opt;
+	uint32_t inode_pointer;
+	uint32_t file_position;
+	uint32_t flags;
+} file_descriptor_t;
+
+typedef struct pcb_t {
+	file_descriptor_t file_array[8];
+	uint32_t esp;
+	uint32_t ebp;
+} pcb_t;
+
+
+
+
 void set_interrupt_gate(uint8_t i);
 
 void set_exeptions();
