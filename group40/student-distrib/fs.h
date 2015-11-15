@@ -1,5 +1,7 @@
 #include "types.h"
 #include "lib.h"
+#include "exceptions.h"
+
 #define NUM_DATA_BLOCKS 1023
 #define BOOT_BLOCK_PADDING 52
 #define MAX_NUM_FILES 63
@@ -40,6 +42,7 @@ typedef struct data_block{
 }data_t;
 
 extern boot_block_t* boot_block;
+
 //functions used to modify the file system
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);

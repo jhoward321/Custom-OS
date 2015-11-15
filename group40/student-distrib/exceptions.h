@@ -2,9 +2,30 @@
 #ifndef _EXCEPTIONS_H
 #define _EXCEPTIONS_H
 
+
+#define EIGHT_KB 0x2000
+#define TASK1_PCB_ADDR (pcb_t*) 0x00800000 - EIGHT_KB 		//PCB address for the first task -> bottom of the task 1's kernel stack
+#define TASK2_PCB_ADDR (pcb_t*) TASK1_PCB_ADDR - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define TASK1_KERNEL_START_ADDR 0x00800000-4 					//start address of task 1's kernel stack
+#define TASK2_KERNEL_START_ADDR TASK1_KERNEL_START_ADDR-EIGHT_KB 			//start address of task 2's kernel stack: 8kb above task 1's kernel stack
+
+// ADD TO .C FILE:
+// ===========================
+// pcb_t* main_pcb;
+// pcb_t* task1 = TASK1_PCB_ADDR;
+// pcb_t* task2 = TASK2_PCB_ADDR;
+// ===========================
+
+
+
 #include "types.h"
 #include "lib.h"
 #include "x86_desc.h"
+
+extern pcb_t* curr_task;
+extern pcb_t* task1;
+extern pcb_t* task2;
+
 
 typedef struct operations_table_t {
 	int32_t (*read)(int32_t fd, void* buf, int32_t length);
@@ -24,8 +45,8 @@ typedef struct pcb_t {
 	file_descriptor_t file_array[8];
 	uint32_t esp;
 	uint32_t ebp;
+	pcb_t* parent_task;
 } pcb_t;
-
 
 
 
