@@ -84,7 +84,7 @@ void add_page(uint32_t pde, uint32_t pd_index){
 	page_directory[pd_index] = pde;
 }
 uint32_t calc_pde_val(uint32_t processid){
-	uint32_t pde = (FOUR_MB + processid * FOUR_MB) | USERBIT | PAGE_DIREC_SIZE_MASK | PRESENT;
+	uint32_t pde = (FOUR_MB + (processid + 1) * FOUR_MB) | USERBIT | PAGE_DIREC_SIZE_MASK | PRESENT;
 	return pde;
 }
 
