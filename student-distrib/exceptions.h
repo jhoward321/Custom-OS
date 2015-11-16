@@ -10,17 +10,39 @@
 #define PCB_ADDR3 (PCB_ADDR2 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
 #define PCB_ADDR4 (PCB_ADDR3 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
 #define PCB_ADDR5 (PCB_ADDR4 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define KEYBOARD_IDT 33 			//Keyboard IDT value
+#define RTC_IDT 40 					//RTC IDT value
+#define SYSTEM_CALL_IDT 128 		//System Call IDT value
+#define DPL_SYS 3 					//DPL value necessary for system call situations
+#define READ 0
+#define WRITE 1
+#define OPEN 2
+#define CLOSE 3
+#define MAX_OPEN_FILES 8
+#define VIRT_ADDR128_INDEX 0x20		//32 is index in page directory for 128MB virtual address
+#define PROG_EXEC_ADDR 0x08048000
+#define EIGHT_MB 0x0800000
+#define IF_FLAG 0x200
+#define MAGIC_NUM_FOR_EXE0 0x7f
+#define MAGIC_NUM_FOR_EXE1 0x45
+#define MAGIC_NUM_FOR_EXE2 0x4c
+#define MAGIC_NUM_FOR_EXE3 0x46
+#define MAGIC_NUM_INDEX0 24
+#define MAGIC_NUM_INDEX1 25
+#define MAGIC_NUM_INDEX2 26
+#define MAGIC_NUM_INDEX3 27
+#define INVALID_INODE -1
+#define MAX_PCBS 6
+#define PCB_END 8
+#define PCB_START 2
+#define USED 1
+#define FREE 0
+#define CHAR_BUFF_SIZE 500
+#define USER_STACK_ADDR (0x8400000-4)
+#define STDIN 0
+#define STDOUT 1
+#define INVALID -1
 
-// #define TASK0_KERNEL_START_ADDR 0x00800000-4 							//start address of task 1's kernel stack
-// #define TASK1_KERNEL_START_ADDR TASK1_KERNEL_START_ADDR - EIGHT_KB 		//start address of task 2's kernel stack: 8kb above task 1's kernel stack
-
-
-// ADD TO .C FILE:
-// ===========================
-// pcb_t* main_pcb;
-// pcb_t* task1 = TASK1_PCB_ADDR;
-// pcb_t* task2 = TASK2_PCB_ADDR;
-// ===========================
 
 
 #include "types.h"
