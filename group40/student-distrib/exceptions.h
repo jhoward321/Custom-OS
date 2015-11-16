@@ -48,7 +48,7 @@ typedef struct file_descriptor_t{
 
 typedef struct pcb_t {
 	file_descriptor_t file_array[8];
-	uint32_t esp;
+	uint32_t esp; //stores parents esp/ebp which is used in halt
 	uint32_t ebp;
 	struct pcb_t* parent_task;
 	struct pcb_t* child_task;

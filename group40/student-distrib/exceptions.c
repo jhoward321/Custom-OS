@@ -252,16 +252,41 @@ void rtc_handler(){	//RTC
 //input is 8 bit value indicating status of current process
 //should never return to the caller
 int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
+	//if process being killed is pid0, start shell again
 	//halt terminates a process, returning the specified value to its parent process
-
-	//restore parents esp/ebp
-
+	if(curr_task->parent_task == NULL){
+		sys_execute("shell", 0,0);
+	}
+	
+	pid_used[curr_task->process_id] = 0; //no longer used
+	//store parents ebp/esp values before changing curr_task
+	uint32_t parentebp = curr_task->ebp;
+	uint32_t parentesp = curr_task->esp;
+	uint32_t parenteip = curr_task->eip;
+	curr_task = curr_task->parent_task;
+	curr_task->child_task = NULL;
+	
 	//restore parents paging
+	uint32_t pde = calc_pde_val(curr_task->process_id);
+	add_page(pde, VIRT_ADDR128_INDEX);
+	//set cr3 register - flush TLB
+	reset_cr3();
+
+	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB) - 4;
 	//jmp halt_ret_label
 
-
-	printf("halt\n" );	//just for testing
-	return -1;
+	//restore old ebp/esp values
+	asm volatile(
+		"movl %0, %%esp \n\
+		movl %1, %%ebp \n\
+		pushl %2 \n\
+		ret \n\
+		"
+		:
+		:"r"(parentesp), "r"(parentebp), "r"(parenteip)
+	);
+	
+	return -1; //should never get here
 }
 
 
