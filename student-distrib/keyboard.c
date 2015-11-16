@@ -108,7 +108,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 }
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
-	
+
 	int byteswritten = 0;
 
 	if((buf == NULL) || (length < 0))
@@ -116,7 +116,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 	int i;
 	cli();
 	for(i = 0; i < length; i++){
-		putc(buf[i]); //not sure this is right
+		putc(buf[i]);
 	}
 	sti();
 	return byteswritten;
@@ -124,6 +124,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 
 //shouldn't ever get called but needs to exist... returns 0
 int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length){
+	
 	return 0;
 }
 //same as terminal_open
@@ -210,7 +211,7 @@ void keyboard_handler(void){
 			case ENTER:
 				cli();
 				kb_buffer[kbbuf_index] = '\n'; //not sure if we need/want this
-				
+
 				putc('\n');
 				//copy keyboard buffer to out_buffer for reading
 				int i;

@@ -186,34 +186,34 @@ entry (unsigned long magic, unsigned long addr)
 
 
 	//=========START FILE SYSTEM TEST CODE=========
-/*
+
 	uint8_t buf[50000];
 	uint32_t i;
 	//1: test read from file
 	//2: ls: print directory contents
 	//3: test rtc
 
-	switch (1) {
+	switch (5) {
 		case 1 :{//read from file
-			uint8_t file_name[FILE_NAME_STRING_LEN] = "hello";//enter file name here to be displayed
-			uint32_t read_count;
-			dentry_t temp;
-			int ret;
-			ret = read_dentry_by_name(file_name, &temp);
-			printf("%d\n", ret);
-			for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
-				printf("%c",file_name[i]);
-			printf("\n");
-
-			uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
-			uint32_t file_length = *curr_inode_address;
-
-			printf("File length = %d\n",file_length);
-
-			read_count = read_data(temp.inode_number, 0, buf, file_length);
-
-			for (i=0; i<file_length; i++)
-				printf("%c",buf[i]);
+			// uint8_t file_name[FILE_NAME_STRING_LEN] = "hello";//enter file name here to be displayed
+			// uint32_t read_count;
+			// dentry_t temp;
+			// int ret;
+			// ret = read_dentry_by_name(file_name, &temp);
+			// printf("%d\n", ret);
+			// for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
+			// 	printf("%c",file_name[i]);
+			// printf("\n");
+			//
+			// uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (temp.inode_number + 1)));
+			// uint32_t file_length = *curr_inode_address;
+			//
+			// printf("File length = %d\n",file_length);
+			//
+			// read_count = read_data(temp.inode_number, 0, buf, file_length);
+			//
+			// for (i=0; i<file_length; i++)
+			// 	printf("%c",buf[i]);
 
 			break;
 		}
@@ -229,41 +229,44 @@ entry (unsigned long magic, unsigned long addr)
 		}
 
 		case 3 :{	//rtc
-			enable_irq(RTC_IRQ);
-			int8_t ret = rtc_write(8);
-			if(ret < 0){
-				printf("invalid rtc freq\n");
-				disable_irq(RTC_IRQ);
-			}
+			// enable_irq(RTC_IRQ);
+			// int8_t ret = rtc_write(8);
+			// if(ret < 0){
+			// 	printf("invalid rtc freq\n");
+			// 	disable_irq(RTC_IRQ);
+			// }
 			break;
 		case 4:{	//test terminal_read
 			int nbytes = 20;
-			terminal_read(buf, nbytes);
+			terminal_read(0, buf, nbytes);
 			printf("testing terminal_read: " );
 			for(i=0; i<nbytes; i++)
 				printf("%c", buf[i]);
 			printf("\n" );
 
-			terminal_write((uint8_t *)"testing terminal_write", 25);
-
+			terminal_write(0, (uint8_t *)"testing terminal_write", 25);
+			break;
 		}
-
+		case 5:
+			curr_task = NULL;
+			int8_t* file = "shell\0";
+			asm volatile("	movl $2, %%eax \n\
+					movl %0, %%ebx  \n\
+					int $0x80"
+					:
+					:"g"(file)
+					:"memory", "eax"
+					);
+			break;
 		}
 		default:
 				;
 	}
-*/
-	curr_task = NULL; 			//set first task to 0
+
+				//set first task to 0
 
 	// sys_execute((uint8_t *)"shell", 0, 0);
-	int8_t* file = "shell\0";
-	asm volatile("	movl $1, %%eax \n\
-			movl %0, %%ebx  \n\
-			int $0x80"
-			:
-			:"g"(file)
-			:"memory", "eax"
-			);
+
 
 	/* Execute the first program (`shell') ... */
 
