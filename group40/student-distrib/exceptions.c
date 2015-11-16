@@ -255,7 +255,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	//if process being killed is pid0, start shell again
 	//halt terminates a process, returning the specified value to its parent process
 	if(curr_task->parent_task == NULL){
-		sys_execute("shell", 0,0);
+		sys_execute((uint8_t*)"shell", 0,0);
 	}
 
 	pid_used[curr_task->process_id] = 0; //no longer used
@@ -386,20 +386,18 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	uint32_t user_stack = 0x8400000-4;
 	//push IRET context onto stack, not positive my eip/esp values are correct
 	asm volatile(
-		"movl %0, %%eax \n\
-		movw %%ax, %%ds \n\
-		pushl %%eax \n\
-		pushl %1 \n\
-		pushfl \n\
-		orl %2, (%%esp) \n\
-		pushl %3 \n\
-		pushl %4 \n\
-		iret \n\
-		"
+		"pushl %0\n\t"
+		"pushl %1\n\t"
+		"pushl %4\n\t"
+		"pushl %2\n\t"
+		"pushl %3\n\t"
+		"movl %0, %%ds\n\t"
+		"iret\n\t"
 		:
 		: "r" (USER_DS), "r" (user_stack), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
 		: "eax", "memory", "cc"
 	);
+
 
 	//IRET, halt_ret_label, RET
 	asm volatile("HALT_RET_LABEL:");
