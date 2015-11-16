@@ -236,6 +236,7 @@ entry (unsigned long magic, unsigned long addr)
 			// 	disable_irq(RTC_IRQ);
 			// }
 			break;
+		}
 		case 4:{	//test terminal_read
 			int nbytes = 20;
 			terminal_read(0, buf, nbytes);
@@ -247,7 +248,7 @@ entry (unsigned long magic, unsigned long addr)
 			terminal_write(0, (uint8_t *)"testing terminal_write", 25);
 			break;
 		}
-		case 5:
+		case 5:{
 			curr_task = NULL;
 			int8_t* file = "shell\0";
 			asm volatile("	movl $2, %%eax \n\
