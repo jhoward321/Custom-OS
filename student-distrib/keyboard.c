@@ -93,6 +93,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 	if(buf == NULL || length < 0)
 		return -1;
 	//wait until ready to read
+	sti();
 	while(!kb_buf_read){}
 	cli();
 
@@ -116,7 +117,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 	int i;
 	cli();
 	for(i = 0; i < length; i++){
-		putc(buf[i]);
+		putc(buf[i]); //not sure this is right
 	}
 	sti();
 	return byteswritten;
@@ -124,7 +125,6 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 
 //shouldn't ever get called but needs to exist... returns 0
 int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length){
-	
 	return 0;
 }
 //same as terminal_open
