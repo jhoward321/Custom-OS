@@ -53,7 +53,7 @@ typedef struct pcb_t {
 	struct pcb_t* parent_task;
 	struct pcb_t* child_task;
 	uint32_t process_id;
-
+	uint32_t eip;
 } pcb_t;
 
 extern pcb_t* curr_task;
