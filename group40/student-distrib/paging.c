@@ -90,8 +90,11 @@ uint32_t calc_pde_val(uint32_t processid){
 
 void reset_cr3(){
 	asm volatile (
-		"movl %0, %%cr3"
+		"movl %0, %%eax \n\
+		movl %%eax, %%cr3 \n\
+		"
 		:
 		:"c"(page_directory)
+		: "eax"
 	);
 }
