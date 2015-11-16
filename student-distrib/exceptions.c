@@ -24,7 +24,7 @@
 pcb_t* curr_task;
 
 static uint32_t pid_used[6] = {0,0,0,0,0,0};
-static pcb_t* PCB_ADDR[6] = {
+static uint32_t PCB_ADDR[6] = {
 						PCB_ADDR0,
 						PCB_ADDR1,
 						PCB_ADDR2,
@@ -35,13 +35,13 @@ static pcb_t* PCB_ADDR[6] = {
 
 // int32_t (*file_operations[])(int32_t fd, uint8_t* buf, int32_t length) = {read_file, write_file, open_file, close_file};
 // int32_t (*dir_operations[])(int32_t fd, uint8_t* buf, int32_t length)  = {read_dir, write_dir, open_dir, close_dir};
-// int32_t (*rtc_operations[])(uint32_t freq)  = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+// int32_t (*rtc_operations[])(uint32_t freq)  = {rtc_read, rtc_write, rtc_open, rtc_close};
 // int32_t (*stdin_operations[])(uint8_t* buf, int32_t nbytes) = {terminal_read, NULL, terminal_open, terminal_close};
 // int32_t (*stdout_operations[])(uint8_t* buf, int32_t nbytes) = {NULL, terminal_write, NULL, NULL};
 
 operations_table_t file_operations = {read_file, write_file, open_file, close_file};
 operations_table_t dir_operations = {read_dir, write_dir, open_dir, close_dir};
-operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close};
 operations_table_t stdin_operations = {terminal_read, NULL, terminal_open, terminal_close};
 operations_table_t stdout_operations = {NULL, terminal_write, NULL, NULL};
 
@@ -239,14 +239,14 @@ void rtc_handler(){	//RTC
 
 // operations_table_t file_operations = {read_file, write_file, open_file, close_file};
 // operations_table_t dir_operations = {read_dir, write_dir, open_dir, close_dir};
-// operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+// operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close};
 // operations_table_t stdin_opt = {};
 // operations_table_t stdout_opt;
 
 
 //checkpoint 3 need halt, execute, open, close, read, write
 //successful calls return 0, failed calls return -1
-//call number placed in eax, first arg in ebx, ecx, edx. No call uses more than 
+//call number placed in eax, first arg in ebx, ecx, edx. No call uses more than
 //3 arguments. Return value placed in eax
 
 //input is 8 bit value indicating status of current process
@@ -255,7 +255,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	//halt terminates a process, returning the specified value to its parent process
 
 	//restore parents esp/ebp
-	
+
 	//restore parents paging
 	//jmp halt_ret_label
 
@@ -268,12 +268,12 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 //attempts to load and execute new program until it terminates
 //command is space separated sequence of words - first word is file name of program
 //rest of command - stripped of leading spaces, is provided to program on request via getargs syscall
-//returns -1 if cant be returned - ie program doesnt exist, not executable, 
+//returns -1 if cant be returned - ie program doesnt exist, not executable,
 //return 256 if program dies by an exception
 //return value in range 0 to 255 if program executes halt syscall, val returned is given by programs call
 //to halt
 int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
-	/*parse, exe check, set up paging, file loader, new pcb, 
+	/*parse, exe check, set up paging, file loader, new pcb,
 	context switch - write tss.esp0/ebp0 with new process kernel stack?
 		save current esp/ebp or anything needed in pcb
 		push artificial IRET context onto stack
@@ -281,7 +281,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		halt_ret_label?
 	RET
 	*/
-	
+
 	if(command == NULL)
 		return -1;
 	//parse name of program and arguments
@@ -321,7 +321,11 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		return -1;
 	//if reach here file exists and is executable
 	//set up paging
-	uint32_t pde = calc_pde_val(curr_task->process_id);
+	uint32_t pde;
+	if(curr_task==NULL)
+		pde = calc_pde_val(0);
+	else
+		pde = calc_pde_val(curr_task->process_id);
 	add_page(pde, VIRT_ADDR128_INDEX);
 
 	//set cr3 register
@@ -333,12 +337,12 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	read_data(fileinfo.inode_number, 0, progbuf, filelength);
 
 	//New PCB
-
+	uint32_t make_berk_happy = new_pcb();
 	//context switch
 
 	//need to get execution point - stored li
-	//curr_task->eip = (progbuf[27] << 24) + (progbuf[26] << 16) + (progbuf[25] << 8) + (progbuf[24]);
-	curr_task->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task->eip, 4);
+	curr_task->eip = (progbuf[27] << 24) + (progbuf[26] << 16) + (progbuf[25] << 8) + (progbuf[24]);
+	//curr_task->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task->eip, 4);
 
 	//need to save old ebp/esp into pcb
 	asm volatile(
@@ -369,7 +373,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		"
 		:
 		: "r" (USER_DS), "r" (curr_task->esp), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
-		: "eax", "memory"
+		: "eax", "memory", "cc"
 	);
 
 	//IRET, halt_ret_label, RET
@@ -379,7 +383,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 }
 
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
-	
+
 	// fd has to be in range AND fd cannot be 1 (stdout)
 	if(fd < 0 || fd > 7 || fd == 1 || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
 		return -1;
@@ -432,12 +436,12 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 			curr_task->file_array[curr_available].opt = &file_operations;  //CHECK THIS <====================
 			open_file(curr_available, NULL, 0);
 			break;
-		
+
 		default:
 			curr_task->file_array[curr_available].opt = &stdin_operations;
 			terminal_open(0, NULL, 0);
 			break;
-			
+
 	}
 
 	return curr_available;
@@ -484,9 +488,10 @@ int32_t new_pcb(){
 
 	if(next_pid == -1)
 		return -1;
-	
 
-	pcb_t* retval = PCB_ADDR[next_pid];
+	pid_used[next_pid] = 1; 		//set pid to being used
+
+	pcb_t* retval = (pcb_t*) PCB_ADDR[next_pid];
 
 	for(i=2; i<8; i++){
 		retval->file_array[i].opt = NULL;
@@ -507,12 +512,17 @@ int32_t new_pcb(){
 	retval->file_array[1].file_position = 0;
 	retval->file_array[1].flags = 1;
 
-	if(curr_task == NULL) 			// !!!!!!============SET CURR_TASK TO NULL IN KERNEL.C
+	if(curr_task == NULL){ 			// !!!!!!============SET CURR_TASK TO NULL IN KERNEL.C
+		retval->parent_task = NULL;
+		retval->child_task = NULL;
+		retval->process_id = next_pid;
+	}
+	else{
 		curr_task->child_task = retval;
-
-	retval->parent_task = curr_task;
-	retval->child_task = NULL;
-	retval->process_id = next_pid;
+		retval->parent_task = curr_task;
+		retval->child_task = NULL;
+		retval->process_id = next_pid;
+	}
 
 	curr_task = retval;
 	//esp and ebp not set.
