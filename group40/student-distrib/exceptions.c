@@ -257,7 +257,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	if(curr_task->parent_task == NULL){
 		sys_execute("shell", 0,0);
 	}
-	
+
 	pid_used[curr_task->process_id] = 0; //no longer used
 	//store parents ebp/esp values before changing curr_task
 	uint32_t parentebp = curr_task->ebp;
@@ -265,7 +265,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	uint32_t parenteip = curr_task->eip;
 	curr_task = curr_task->parent_task;
 	curr_task->child_task = NULL;
-	
+
 	//restore parents paging
 	uint32_t pde = calc_pde_val(curr_task->process_id);
 	add_page(pde, VIRT_ADDR128_INDEX);
@@ -285,7 +285,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 		:
 		:"r"(parentesp), "r"(parentebp), "r"(parenteip)
 	);
-	
+
 	return -1; //should never get here
 }
 
@@ -362,7 +362,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	read_data(fileinfo.inode_number, 0, progbuf, filelength);
 
 	//New PCB
-	uint32_t make_berk_happy = new_pcb();
+	new_pcb();
 	//context switch
 
 	//need to get execution point - stored li
