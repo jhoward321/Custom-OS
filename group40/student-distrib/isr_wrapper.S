@@ -24,37 +24,21 @@ ex_128:
 #        pushl %ecx		#push second arg
 #        pushl %ebx		#push first arg
 #        cld
-        
-        pushl %eax
-        pushw %fs
-        pushw %es
-        pushw %ds
-        pushl %eax
-        pushl %ebp
-        pushl %edi
-        pushl %esi
+
+
+	pushal
         pushl %edx
         pushl %ecx
         pushl %ebx
 
-	cmpl $10, %ecx		#compare to 10, the max number of sys calls
+
+	cmpl $10, %eax		#compare to 10, the max number of sys calls
 	ja ret_error		#ret error when sys call is greater than 10
         call *jumptable(,%eax,4)#call handler
- #       movl %eax, ret_val	#handler's return val is in eax save in ret_val
-        movl %eax, 24(%esp)
-        
-        addl $4, %esp
-        popl %ebx
-        popl %ecx
-        popl %edx
-        popl %esi
-        popl %edi
-        popl %ebp
-        popl %eax
-        popw %ds
-        popw %es
-        popw %fs
-        addl $4, %esp
+
+	addl $12, %esp
+	popal
+
         iret
 
 
@@ -63,22 +47,10 @@ ex_128:
  #       iret
 
 ret_error:
-        addl $4, %esp
-        popl %ebx
-        popl %ecx
-        popl %edx
-        popl %esi
-        popl %edi
-        popl %ebp
-        popl %eax
-        popw %ds
-        popw %es
-        popw %fs
-        addl $4, %esp
+	addl $12, %esp
+	popal
 	movl $-1, %eax		#restore ret val to eax
 	iret
 
-#ret_val:			#temporarily stores the ret val
-#        .long 0x0
 jumptable:
-	.long sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close, sys_getargs, sys_vidmap, sys_set_handler, sys_sigreturn
+	.long 0x0, sys_halt, sys_execute, sys_read, sys_write, sys_open, sys_close, sys_getargs, sys_vidmap, sys_set_handler, sys_sigreturn
