@@ -503,10 +503,21 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 }
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
-	if(curr_task->file_array[fd].opt->close == NULL)
-		return -1;
 
-	return -1;
+	if (fd == 0 || fd ==  1) {
+		return -1;
+	}
+	
+	if(curr_task->file_array[fd].flags == 0) {
+		return -1;
+	}
+	
+	curr_task->file_array[fd].opt = NULL;
+	curr_task->file_array[fd].inode_number = -1;
+	curr_task->file_array[fd].file_position = NULL;
+	curr_task->file_array[fd].flags = 0;
+	
+	return 0;
 }
 
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
