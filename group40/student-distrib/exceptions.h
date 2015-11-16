@@ -4,12 +4,12 @@
 
 
 #define EIGHT_KB 0x2000
-#define PCB_ADDR0 (pcb_t*) 0x00800000 - EIGHT_KB 		//PCB address for the first task -> bottom of the task 1's kernel stack
-#define PCB_ADDR1 (pcb_t*) PCB_ADDR0 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR2 (pcb_t*) PCB_ADDR1 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR3 (pcb_t*) PCB_ADDR2 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR4 (pcb_t*) PCB_ADDR3 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR5 (pcb_t*) PCB_ADDR4 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR0 (0x00800000 - EIGHT_KB) 		//PCB address for the first task -> bottom of the task 1's kernel stack
+#define PCB_ADDR1 (PCB_ADDR0 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR2 (PCB_ADDR1 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR3 (PCB_ADDR2 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR4 (PCB_ADDR3 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR5 (PCB_ADDR4 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
 
 // #define TASK0_KERNEL_START_ADDR 0x00800000-4 							//start address of task 1's kernel stack
 // #define TASK1_KERNEL_START_ADDR TASK1_KERNEL_START_ADDR - EIGHT_KB 		//start address of task 2's kernel stack: 8kb above task 1's kernel stack

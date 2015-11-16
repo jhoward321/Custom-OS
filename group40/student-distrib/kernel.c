@@ -193,14 +193,14 @@ entry (unsigned long magic, unsigned long addr)
 	//2: ls: print directory contents
 	//3: test rtc
 
-	switch (0) {
+	switch (1) {
 		case 1 :{//read from file
-			uint8_t file_name[FILE_NAME_STRING_LEN] = "frame0.txt";//enter file name here to be displayed
+			uint8_t file_name[FILE_NAME_STRING_LEN] = "hello";//enter file name here to be displayed
 			uint32_t read_count;
 			dentry_t temp;
-
-			read_dentry_by_name(file_name, &temp);
-
+			int ret;
+			ret = read_dentry_by_name(file_name, &temp);
+			printf("%d\n", ret);
 			for(i=0; i<MAX_FILE_NAME_LENGTH; i++)
 				printf("%c",file_name[i]);
 			printf("\n");
@@ -245,7 +245,7 @@ entry (unsigned long magic, unsigned long addr)
 			printf("\n" );
 
 			terminal_write((uint8_t *)"testing terminal_write", 25);
-			
+
 		}
 
 		}
@@ -254,7 +254,16 @@ entry (unsigned long magic, unsigned long addr)
 	}
 */
 	curr_task = NULL; 			//set first task to 0
-	sys_execute((uint8_t *)"shell", 0, 0);
+
+	// sys_execute((uint8_t *)"shell", 0, 0);
+	int8_t* file = "shell\0";
+	asm volatile("	movl $1, %%eax \n\
+			movl %0, %%ebx  \n\
+			int $0x80"
+			:
+			:"g"(file)
+			:"memory", "eax"
+			);
 
 	/* Execute the first program (`shell') ... */
 

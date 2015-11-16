@@ -20,10 +20,10 @@ ex_40:
 
 ex_128:
         pusha			#save all regs
-        pushl %ebx		#push first arg
+	pushl %edx		#push third arg
         pushl %ecx		#push second arg
-        pushl %edx		#push third arg
-        cld
+        pushl %ebx		#push first arg
+#        cld
 	cmpl $10, %ecx		#compare to 10, the max number of sys calls
 	ja ret_error		#ret error when sys call is greater than 10
         call *jumptable(,%eax,4)#call handler
