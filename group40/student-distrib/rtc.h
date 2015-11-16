@@ -18,10 +18,10 @@ volatile int interrupt_flag; //used to tell when interrupts occur
 
 //rtc initialization function
 void rtc_init(void);
-int32_t rtc_read();
-int32_t rtc_write(uint32_t freq);
-int32_t rtc_close(void);
-int32_t rtc_open(void);
+int32_t rtc_read(int32_t fd, uint8_t* buf, int32_t length);
+int32_t rtc_write(int32_t fd, uint8_t* buf, int32_t length);
+int32_t rtc_close(int32_t fd, uint8_t* buf, int32_t length);
+int32_t rtc_open(int32_t fd, uint8_t* buf, int32_t length);
 
 
 #endif /* RTC_H */

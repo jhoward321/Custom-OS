@@ -24,10 +24,6 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 	for(i=0; i<boot_block->total_dirs; i++){
 		if (strncmp((int8_t*)fname, (int8_t*)boot_block->dir_entries[i].file_name, name_length) == 0) {
 			memcpy(dentry, &boot_block->dir_entries[i], DENTRY_SIZE);
-
-	/*		memcpy(dentry->file_name, boot_block->dir_entries[i].file_name, MAX_FILE_NAME_LENGTH);
-			dentry->file_type = boot_block->dir_entries[i].file_type;
-			dentry->inode_number = boot_block->dir_entries[i].inode_number;*/
 			return 0;
 		}
 	}
@@ -38,36 +34,10 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 	if(index > boot_block->total_dirs || index < 0 || dentry == NULL)
 		return -1;
-
 	memcpy(dentry, &boot_block->dir_entries[index], DENTRY_SIZE);
-/*	memcpy(dentry->file_name, boot_block->dir_entries[index].file_name, MAX_FILE_NAME_LENGTH);
-	dentry->file_type = boot_block->dir_entries[index].file_type;
-	dentry->inode_number = boot_block->dir_entries[index].inode_number;*/
-
-
 	return 0;
 }
 
-
-uint32_t read_dir(uint8_t* buf){
-
-	dentry_t temp;
-
-	int index = 0;
-	int i, j;
-
-	for(i=0; i<MAX_NUM_FILES; i++){
-		if(read_dentry_by_index(i, &temp) == 0){
-			for(j=0; j<32; j++){
-				buf[index++] = temp.file_name[j];
-			}
-			buf[index++] ='\n';
-		}
-	}
-
-	return index;
-
-}
 
 //copy data from a file from at offset, of length bytes, and store in buf
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
@@ -136,6 +106,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 }
 
 
+
 //returns the given file length represented by the inode (all calculations are copied from the above read_data function)
 uint32_t read_file_length(uint32_t inode){
 	//address of the current inode where data will be extracted
@@ -147,20 +118,72 @@ uint32_t read_file_length(uint32_t inode){
 
 
 
-//write data to a file, should never be called since we have a read only file system
-int32_t write_data(uint32_t inode, uint32_t offset, const uint8_t* buf, uint32_t length){
+
+// ============FILE OPERATIONS==============
+
+int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
+
+	uint32_t curr_inode_number = curr_task->file_array[fd].inode_number;
+	uint32_t offset = curr_task->file_array[fd].file_position;
+	uint32_t read_amount = read_data(curr_inode_number, offset, buf, length);
+	curr_task->file_array[fd].file_position += read_amount;
+	
+	return read_amount;
+}
+
+int32_t write_file(int32_t fd, uint8_t* buf, int32_t length){
 	return -1; //write data always fails, read only
 }
 
-//open a file
-int32_t open_file(const uint8_t* fname){
-
-
+int32_t open_file(int32_t fd, uint8_t* buf, int32_t length){
+	curr_task->file_array[fd].file_position = 0;
+	curr_task->file_array[fd].flags = 1;
 	return 0;
 }
 
-int32_t close_file(int32_t fd){
+int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
 
-
+	curr_task->file_array[fd].flags = 0;
 	return 0;
 }
+
+
+
+// ============DIR OPERATIONS==============
+
+int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
+
+	dentry_t temp;
+
+	int index = 0;
+	int i, j;
+
+	for(i=0; i<MAX_NUM_FILES; i++){
+		if(read_dentry_by_index(i, &temp) == 0){
+			for(j=0; j<32; j++){
+				buf[index++] = temp.file_name[j];
+			}
+			buf[index++] ='\n';
+		}
+	}
+
+	return index;
+
+}
+
+int32_t write_dir(int32_t fd, uint8_t* buf, int32_t length){
+	return -1;
+}
+
+int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length){
+
+	curr_task->file_array[fd].inode_number = 0;
+	curr_task->file_array[fd].file_position = 0;
+	curr_task->file_array[fd].flags = 1;
+	return 0;
+}
+
+int32_t close_dir(int32_t fd, uint8_t* buf, int32_t length){
+	return 0;
+}
+

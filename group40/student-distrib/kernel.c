@@ -159,6 +159,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	// clear();			//clear the screen
 
+
 	set_exeptions();		//set up known exceptions in table
 	paging_init();			//enable paging
 
@@ -184,8 +185,8 @@ entry (unsigned long magic, unsigned long addr)
 	sti();
 
 
-
 	//=========START FILE SYSTEM TEST CODE=========
+/*
 	uint8_t buf[50000];
 	uint32_t i;
 	//1: test read from file
@@ -220,7 +221,7 @@ entry (unsigned long magic, unsigned long addr)
 		case 2 :{	//ls
 			int index;
 			printf("Reading directory:\n");
-			index = read_dir(buf);
+			index = read_dir(0, buf, 0);
 			for(i=0; i<index; i++){
 				printf("%c",buf[i]);
 			}
@@ -251,14 +252,11 @@ entry (unsigned long magic, unsigned long addr)
 		default:
 				;
 	}
-
-
-
+*/
+	curr_task = NULL; 			//set first task to 0
+	sys_execute((uint8_t *)"shell", 0, 0);
 
 	/* Execute the first program (`shell') ... */
-
-	while(1){
-	}
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
