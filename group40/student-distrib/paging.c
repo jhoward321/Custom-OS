@@ -17,10 +17,12 @@
 #define NUM_INDEXES 1024 				//number of indexes in directory
 #define ALIGN_SIZE 4096 				//4k, size for alignment
 #define NOT_PRESENT 0x00000002 			//key for mapping kernel as not present
-#define PRESENT 0x00000003 				//key for mapping kernel as present
+#define PRESENT 0x00000003 				//key for mapping kernel as present, and read/write
 #define KERNEL_VIRTADR 0x400000 		//kernel virtual address (4MB)
 #define VID_MEM_LOC 0xB8 				//video memory location
 #define PAGE_DIREC_SIZE_MASK 0x80 		//Mask to set Page Directory Size: stores the page size for that specific entry. (4MB)
+#define FOUR_MB 0x0400000
+#define USERBIT 0x4
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
@@ -70,4 +72,26 @@ void paging_init(){
 
 		);
 
+}
+//find empty page directory entry index
+// uint32_t find_empty_page(){
+// 	uint32_t i = 2;
+// 	while(page_directory[i++] & PRESENT);
+// 	return i;
+// }
+// //
+void add_page(uint32_t pde, uint32_t pd_index){
+	page_directory[pd_index] = pde;
+}
+uint32_t calc_pde_val(uint32_t processid){
+	uint32_t pde = (FOUR_MB + processid * FOUR_MB) | USERBIT | PAGE_DIREC_SIZE_MASK | PRESENT;
+	return pde;
+}
+
+void reset_cr3(){
+	asm volatile (
+		"movl %0, %%cr3"
+		:
+		:"c"(page_directory)
+	);
 }

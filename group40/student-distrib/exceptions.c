@@ -2,6 +2,7 @@
 #include "rtc.h" //needed for rtc handler
 #include "i8259.h"
 #include "keyboard.h"
+#include "x86_desc.h"
 #include "lib.h"
 #include "fs.h"
 
@@ -13,6 +14,11 @@
 #define WRITE 1
 #define OPEN 2
 #define CLOSE 3
+#define MAX_OPEN_FILES 8
+#define VIRT_ADDR128_INDEX 0x20		//32 is index in page directory for 128MB virtual address
+#define PROG_EXEC_ADDR 0x08048000
+#define EIGHT_MB 0x0800000
+#define IF_FLAG 0x200
 
 
 pcb_t* curr_task;
@@ -238,14 +244,138 @@ void rtc_handler(){	//RTC
 // operations_table_t stdout_opt;
 
 
+//checkpoint 3 need halt, execute, open, close, read, write
+//successful calls return 0, failed calls return -1
+//call number placed in eax, first arg in ebx, ecx, edx. No call uses more than 
+//3 arguments. Return value placed in eax
+
+//input is 8 bit value indicating status of current process
+//should never return to the caller
 int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
+	//halt terminates a process, returning the specified value to its parent process
+
+	//restore parents esp/ebp
+	
+	//restore parents paging
+	//jmp halt_ret_label
+
+
 	printf("halt\n" );	//just for testing
 	return -1;
 }
 
-int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 
-	return -1;
+//attempts to load and execute new program until it terminates
+//command is space separated sequence of words - first word is file name of program
+//rest of command - stripped of leading spaces, is provided to program on request via getargs syscall
+//returns -1 if cant be returned - ie program doesnt exist, not executable, 
+//return 256 if program dies by an exception
+//return value in range 0 to 255 if program executes halt syscall, val returned is given by programs call
+//to halt
+int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
+	/*parse, exe check, set up paging, file loader, new pcb, 
+	context switch - write tss.esp0/ebp0 with new process kernel stack?
+		save current esp/ebp or anything needed in pcb
+		push artificial IRET context onto stack
+		IRET
+		halt_ret_label?
+	RET
+	*/
+	
+	if(command == NULL)
+		return -1;
+	//parse name of program and arguments
+	uint32_t i;
+	uint8_t argsflag = 0;
+	for(i = 0; i < strlen((int8_t *)command); i++){
+		if(command[i] == ' '){
+			//check for args and get index where command ends and args start
+			argsflag = 1;
+			break;
+		}
+	}
+	//if flag has been set then we have arguments and need to parse
+	char program[500];
+	char arguments[500];
+	if(argsflag == 1){
+		//arguments exist, need to parse out arguments
+		strncpy(program, (int8_t *) command, i);
+		program[i] = '\0';
+		i++; //increment index to start of args rather than where first space is
+		strncpy((int8_t *)arguments, (int8_t *) (command + i), strlen((int8_t *)command) - i);
+	}
+	//no args
+	else{
+		strncpy(program, (int8_t *)command, strlen((int8_t *) command) + 1); //+1 copies over null terminator
+		arguments[0] = '\0';
+	}
+	//done parsing arguments, make sure executable
+	//make sure file exists
+	dentry_t fileinfo;
+	if(read_dentry_by_name((uint8_t *) program, &fileinfo) == -1)
+		return -1;
+	//file exists, make sure executable
+	unsigned char buffer[4];
+	read_data(fileinfo.inode_number, 0, buffer, 4);
+	if(buffer[0] != 0x7f || buffer[1] != 0x45 || buffer[2] != 0x4c || buffer[3] != 0x46)
+		return -1;
+	//if reach here file exists and is executable
+	//set up paging
+	uint32_t pde = calc_pde_val(curr_task->process_id);
+	add_page(pde, VIRT_ADDR128_INDEX);
+
+	//set cr3 register
+	reset_cr3();
+
+	//File Loader
+	uint8_t *progbuf = (uint8_t*) PROG_EXEC_ADDR;
+	uint32_t filelength = read_file_length(fileinfo.inode_number);
+	read_data(fileinfo.inode_number, 0, progbuf, filelength);
+
+	//New PCB
+
+	//context switch
+
+	//need to get execution point - stored li
+	//curr_task->eip = (progbuf[27] << 24) + (progbuf[26] << 16) + (progbuf[25] << 8) + (progbuf[24]);
+	curr_task->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task->eip, 4);
+
+	//need to save old ebp/esp into pcb
+	asm volatile(
+		"movl %%esp, %0"
+		:"=r"(curr_task->esp)
+	);
+	asm volatile(
+		"movl %%ebp, %0"
+		:"=r"(curr_task->ebp)
+	);
+
+	//set tss stuff
+	tss.ss0 = KERNEL_DS;
+	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
+
+
+	//push IRET context onto stack, not positive my eip/esp values are correct
+	asm volatile(
+		"movl %0, %%eax \n\
+		movw %%ax, %%ds \n\
+		pushl %%eax \n\
+		pushl %1 \n\
+		pushfl \n\
+		orl %2, (%%esp) \n\
+		pushl %3 \n\
+		pushl %4 \n\
+		iret \n\
+		"
+		:
+		: "r" (USER_DS), "r" (curr_task->esp), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
+		: "eax", "memory"
+	);
+
+	//IRET, halt_ret_label, RET
+	asm volatile("HALT_RET_LABEL:");
+
+	return 0;
 }
 
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
