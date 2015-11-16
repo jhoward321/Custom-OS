@@ -350,7 +350,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	if(curr_task==NULL)
 		pde = calc_pde_val(0);
 	else
-		pde = calc_pde_val(curr_task->process_id);
+		pde = calc_pde_val(get_next_pid());	//will need to change later
 	add_page(pde, VIRT_ADDR128_INDEX);
 
 	//set cr3 register
