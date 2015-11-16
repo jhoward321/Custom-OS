@@ -332,6 +332,10 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//if flag has been set then we have arguments and need to parse
 	char program[500];
 	char arguments[500];
+	// for(i = 0; i < 500; i++){
+	// 	program[i] = '\0';
+	// 	arguments[i] = '\0';
+	// }
 	if(argsflag == 1){
 		//arguments exist, need to parse out arguments
 		strncpy(program, (int8_t *) command, i);
@@ -344,6 +348,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		strncpy(program, (int8_t *)command, strlen((int8_t *) command) + 1); //+1 copies over null terminator
 		arguments[0] = '\0';
 	}
+
 	//done parsing arguments, make sure executable
 	//make sure file exists
 	dentry_t fileinfo;
@@ -356,6 +361,8 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		return -1;
 	//if reach here file exists and is executable
 	//set up paging
+	if(get_next_pid() == -1)
+		return -1;
 	uint32_t pde;
 	if(curr_task==NULL)
 		pde = calc_pde_val(0);
@@ -373,6 +380,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 
 	//New PCB
 	new_pcb();
+
 	//context switch
 
 	//need to get execution point - stored li
