@@ -383,7 +383,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	tss.ss0 = KERNEL_DS;
 	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
 
-
+	uint32_t user_stack = 0x8400000-4;
 	//push IRET context onto stack, not positive my eip/esp values are correct
 	asm volatile(
 		"movl %0, %%eax \n\
@@ -397,7 +397,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		iret \n\
 		"
 		:
-		: "r" (USER_DS), "r" (curr_task->esp), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
+		: "r" (USER_DS), "r" (user_stack), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
 		: "eax", "memory", "cc"
 	);
 
