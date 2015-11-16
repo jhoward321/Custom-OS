@@ -191,6 +191,15 @@ void ex_13(){
 void ex_14(){
 	ex_error();
 	printf("14: Page Fault\n");
+	uint32_t addr;
+	asm volatile(
+		"movl %%cr2, %%eax\n\
+		movl %%eax, %0"
+		:"=r"(addr)
+		:
+		:"eax"
+	);
+	printf("CR2= %x\n", addr);
 	ex_halt();
 }
 void ex_15(){
@@ -260,11 +269,11 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 
 	pid_used[curr_task->process_id] = 0; //no longer used
 	//store parents ebp/esp values before changing curr_task
-	uint32_t parentebp = curr_task->ebp;
-	uint32_t parentesp = curr_task->esp;
-	uint32_t parenteip = curr_task->eip;
+	//uint32_t parentebp = curr_task->ebp;
+	//uint32_t parentesp = curr_task->esp;
+	//uint32_t parenteip = curr_task->eip;
 	curr_task = curr_task->parent_task;
-	curr_task->child_task = NULL;
+	//curr_task->child_task = NULL;
 
 	//restore parents paging
 	uint32_t pde = calc_pde_val(curr_task->process_id);
@@ -272,18 +281,19 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	//set cr3 register - flush TLB
 	reset_cr3();
 
-	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB) - 4;
+	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB);
 	//jmp halt_ret_label
-
+	uint32_t ret = status;
 	//restore old ebp/esp values
 	asm volatile(
-		"movl %0, %%esp \n\
-		movl %1, %%ebp \n\
-		pushl %2 \n\
-		ret \n\
+		"movl %0, %%eax \n\
+		movl %1, %%esp \n\
+		movl %2, %%ebp \n\
+		jmp HALT_RET_LABEL \n\
 		"
 		:
-		:"r"(parentesp), "r"(parentebp), "r"(parenteip)
+		:"r"(ret), "r"(curr_task->child_task->esp), "r"(curr_task->child_task->ebp)
+		:"cc"
 	);
 
 	return -1; //should never get here
@@ -403,7 +413,13 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 
 
 	//IRET, halt_ret_label, RET
-	asm volatile("HALT_RET_LABEL:");
+	asm volatile(
+		"HALT_RET_LABEL: \n\
+		leave \n\
+		ret \n\
+		"
+	);
+
 
 	return 0;
 }
@@ -413,7 +429,8 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 	// fd has to be in range AND fd cannot be 1 (stdout)
 	if(fd < 0 || fd > 7 || fd == 1 || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
 		return -1;
-
+	if(curr_task->file_array[fd].opt->read == NULL)
+		return -1;
 
 	return curr_task->file_array[fd].opt->read(fd, buf, nbytes);
 }
@@ -421,6 +438,8 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes){
 
 	if(fd <= 0 || fd > 7 || curr_task->file_array[fd].flags == 0)
+		return -1;
+	if(curr_task->file_array[fd].opt->write == NULL)
 		return -1;
 
 	return curr_task->file_array[fd].opt->write(fd, (uint8_t*)buf, nbytes);
@@ -436,6 +455,8 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 	if (read_dentry_by_name(filename, &temp) == -1){
 		return -2; 				//return value for file doesn't exist
 	}
+	if(curr_task->file_array[fd].opt->open == NULL)
+		return -1;
 
 	for(fd = 2; fd<8; fd++){ 		//go through the file array for the current pcb
 		if(curr_task->file_array[fd].flags == 0){
@@ -474,6 +495,8 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 }
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
+	if(curr_task->file_array[fd].opt->close == NULL)
+		return -1;
 
 	return -1;
 }
