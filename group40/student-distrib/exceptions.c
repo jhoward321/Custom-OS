@@ -6,25 +6,11 @@
 #include "lib.h"
 #include "fs.h"
 
-#define KEYBOARD_IDT 33 			//Keyboard IDT value
-#define RTC_IDT 40 					//RTC IDT value
-#define SYSTEM_CALL_IDT 128 		//System Call IDT value
-#define DPL_SYS 3 					//DPL value necessary for system call situations
-#define READ 0
-#define WRITE 1
-#define OPEN 2
-#define CLOSE 3
-#define MAX_OPEN_FILES 8
-#define VIRT_ADDR128_INDEX 0x20		//32 is index in page directory for 128MB virtual address
-#define PROG_EXEC_ADDR 0x08048000
-#define EIGHT_MB 0x0800000
-#define IF_FLAG 0x200
-
 
 pcb_t* curr_task;
 
-static uint32_t pid_used[6] = {0,0,0,0,0,0};
-static uint32_t PCB_ADDR[6] = {
+static uint32_t pid_used[MAX_PCBS] = {0,0,0,0,0,0};
+static uint32_t PCB_ADDR[MAX_PCBS] = {
 						PCB_ADDR0,
 						PCB_ADDR1,
 						PCB_ADDR2,
@@ -267,7 +253,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 		sys_execute((uint8_t*)"shell", 0,0);
 	}
 
-	pid_used[curr_task->process_id] = 0; //no longer used
+	pid_used[curr_task->process_id] = FREE; //no longer used
 	//store parents ebp/esp values before changing curr_task
 	//uint32_t parentebp = curr_task->ebp;
 	//uint32_t parentesp = curr_task->esp;
@@ -330,13 +316,13 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		}
 	}
 	//if flag has been set then we have arguments and need to parse
-	char program[500];
-	char arguments[500];
+	char program[CHAR_BUFF_SIZE];
+	char arguments[CHAR_BUFF_SIZE];
 	// for(i = 0; i < 500; i++){
 	// 	program[i] = '\0';
 	// 	arguments[i] = '\0';
 	// }
-	if(argsflag == 1){
+	if(argsflag == USED){
 		//arguments exist, need to parse out arguments
 		strncpy(program, (int8_t *) command, i);
 		program[i] = '\0';
@@ -357,7 +343,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//file exists, make sure executable
 	unsigned char buffer[4];
 	read_data(fileinfo.inode_number, 0, buffer, 4);
-	if(buffer[0] != 0x7f || buffer[1] != 0x45 || buffer[2] != 0x4c || buffer[3] != 0x46)
+	if(buffer[0] != MAGIC_NUM_FOR_EXE0 || buffer[1] != MAGIC_NUM_FOR_EXE1 || buffer[2] != MAGIC_NUM_FOR_EXE2 || buffer[3] != MAGIC_NUM_FOR_EXE3)
 		return -1;
 	//if reach here file exists and is executable
 	//set up paging
@@ -384,7 +370,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//context switch
 
 	//need to get execution point - stored li
-	curr_task->eip = (progbuf[27] << 24) + (progbuf[26] << 16) + (progbuf[25] << 8) + (progbuf[24]);
+	curr_task->eip = (progbuf[MAGIC_NUM_INDEX3] << 24) + (progbuf[MAGIC_NUM_INDEX2] << 16) + (progbuf[MAGIC_NUM_INDEX1] << 8) + (progbuf[MAGIC_NUM_INDEX0]);
 	//curr_task->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task->eip, 4);
 
 	//need to save old ebp/esp into pcb
@@ -401,7 +387,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	tss.ss0 = KERNEL_DS;
 	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
 
-	uint32_t user_stack = 0x8400000-4;
+	uint32_t user_stack = USER_STACK_ADDR;
 	//push IRET context onto stack, not positive my eip/esp values are correct
 	asm volatile(
 		"movl %0, %%eax \n\
@@ -435,7 +421,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 
 	// fd has to be in range AND fd cannot be 1 (stdout)
-	if(fd < 0 || fd > 7 || fd == 1 || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
+	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
 		return -1;
 	if(curr_task->file_array[fd].opt->read == NULL)
 		return -1;
@@ -445,7 +431,7 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes){
 
-	if(fd <= 0 || fd > 7 || curr_task->file_array[fd].flags == 0)
+	if(fd <= STDIN || fd >= PCB_END || curr_task->file_array[fd].flags == 0)
 		return -1;
 	if(curr_task->file_array[fd].opt->write == NULL)
 		return -1;
@@ -458,22 +444,22 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
 	dentry_t temp;
 	uint32_t fd;
-	uint32_t curr_available = -1;
+	uint32_t curr_available = INVALID;
 	//check if file exists
-	if (read_dentry_by_name(filename, &temp) == -1){
+	if (read_dentry_by_name(filename, &temp) == INVALID){
 		return -2; 				//return value for file doesn't exist
 	}
 	if(curr_task->file_array[fd].opt->open == NULL)
 		return -1;
 
-	for(fd = 2; fd<8; fd++){ 		//go through the file array for the current pcb
+	for(fd = PCB_START; fd<PCB_END; fd++){ 		//go through the file array for the current pcb
 		if(curr_task->file_array[fd].flags == 0){
 			curr_available = fd;
 			break;
 		}
 	}
 
-	if(curr_available == -1)
+	if(curr_available == INVALID)
 		return -1;
 
 	switch(temp.file_type){
@@ -504,18 +490,18 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 
-	if (fd == 0 || fd ==  1) {
+	if (fd == STDIN || fd ==  STDOUT) {
 		return -1;
 	}
 	
-	if(curr_task->file_array[fd].flags == 0) {
+	if(curr_task->file_array[fd].flags == FREE) {
 		return -1;
 	}
 	
 	curr_task->file_array[fd].opt = NULL;
-	curr_task->file_array[fd].inode_number = -1;
+	curr_task->file_array[fd].inode_number = INVALID_INODE;
 	curr_task->file_array[fd].file_position = NULL;
-	curr_task->file_array[fd].flags = 0;
+	curr_task->file_array[fd].flags = FREE;
 	
 	return 0;
 }
@@ -542,8 +528,8 @@ int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3){
 
 int32_t get_next_pid(){
 	int i;
-	for(i=0; i<6; i++){
-		if(pid_used[i] == 0)
+	for(i=0; i<MAX_PCBS; i++){
+		if(pid_used[i] == FREE)
 			return i;
 	}
 	return -1;
@@ -554,31 +540,31 @@ int32_t new_pcb(){
 	int next_pid = get_next_pid();
 	int i;
 
-	if(next_pid == -1)
+	if(next_pid == INVALID_INODE)
 		return -1;
 
-	pid_used[next_pid] = 1; 		//set pid to being used
+	pid_used[next_pid] = USED; 		//set pid to being used
 
 	pcb_t* retval = (pcb_t*) PCB_ADDR[next_pid];
 
-	for(i=2; i<8; i++){
+	for(i=PCB_START; i<PCB_END; i++){
 		retval->file_array[i].opt = NULL;
-		retval->file_array[i].inode_number = -1; 		//set an invalid value
+		retval->file_array[i].inode_number = INVALID_INODE; 		//set an invalid value
 		retval->file_array[i].file_position = 0; 	//position 0
-		retval->file_array[i].flags = 0; 	//not in use
+		retval->file_array[i].flags = FREE; 	//not in use
 	}
 
 	//set stdin:
-	retval->file_array[0].opt = &stdin_operations;
-	retval->file_array[0].inode_number = -1;
-	retval->file_array[0].file_position = 0;
-	retval->file_array[0].flags = 1;
+	retval->file_array[STDIN].opt = &stdin_operations;
+	retval->file_array[STDIN].inode_number = INVALID_INODE;
+	retval->file_array[STDIN].file_position = 0;
+	retval->file_array[STDIN].flags = USED;
 
 	//set stdout:
-	retval->file_array[1].opt = &stdout_operations;
-	retval->file_array[1].inode_number = -1;
-	retval->file_array[1].file_position = 0;
-	retval->file_array[1].flags = 1;
+	retval->file_array[STDOUT].opt = &stdout_operations;
+	retval->file_array[STDOUT].inode_number = INVALID_INODE;
+	retval->file_array[STDOUT].file_position = 0;
+	retval->file_array[STDOUT].flags = USED;
 
 	if(curr_task == NULL){ 			// !!!!!!============SET CURR_TASK TO NULL IN KERNEL.C
 		retval->parent_task = NULL;

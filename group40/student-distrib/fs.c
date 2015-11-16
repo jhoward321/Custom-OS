@@ -1,6 +1,5 @@
 #include "fs.h"
 
-
 boot_block_t* boot_block;
 
 //search the file system for
@@ -137,13 +136,13 @@ int32_t write_file(int32_t fd, uint8_t* buf, int32_t length){
 
 int32_t open_file(int32_t fd, uint8_t* buf, int32_t length){
 	curr_task->file_array[fd].file_position = 0;
-	curr_task->file_array[fd].flags = 1;
+	curr_task->file_array[fd].flags = USED;
 	return 0;
 }
 
 int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
 
-	curr_task->file_array[fd].flags = 0;
+	curr_task->file_array[fd].flags = FREE;
 	return 0;
 }
 
@@ -160,7 +159,7 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	for(i=0; i<MAX_NUM_FILES; i++){
 		if(read_dentry_by_index(i, &temp) == 0){
-			for(j=0; j<32; j++){
+			for(j=0; j<MAX_FILE_NAME_LENGTH; j++){
 				buf[index++] = temp.file_name[j];
 			}
 			buf[index++] ='\n';
@@ -179,7 +178,7 @@ int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	curr_task->file_array[fd].inode_number = 0;
 	curr_task->file_array[fd].file_position = 0;
-	curr_task->file_array[fd].flags = 1;
+	curr_task->file_array[fd].flags = USED;
 	return 0;
 }
 
