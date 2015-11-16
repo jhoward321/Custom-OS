@@ -4,10 +4,16 @@
 
 
 #define EIGHT_KB 0x2000
-#define TASK1_PCB_ADDR (pcb_t*) 0x00800000 - EIGHT_KB 		//PCB address for the first task -> bottom of the task 1's kernel stack
-#define TASK2_PCB_ADDR (pcb_t*) TASK1_PCB_ADDR - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define TASK1_KERNEL_START_ADDR 0x00800000-4 					//start address of task 1's kernel stack
-#define TASK2_KERNEL_START_ADDR TASK1_KERNEL_START_ADDR-EIGHT_KB 			//start address of task 2's kernel stack: 8kb above task 1's kernel stack
+#define PCB_ADDR0 (pcb_t*) 0x00800000 - EIGHT_KB 		//PCB address for the first task -> bottom of the task 1's kernel stack
+#define PCB_ADDR1 (pcb_t*) PCB_ADDR0 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR2 (pcb_t*) PCB_ADDR1 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR3 (pcb_t*) PCB_ADDR2 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR4 (pcb_t*) PCB_ADDR3 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR5 (pcb_t*) PCB_ADDR4 - EIGHT_KB 	//PCB address for the second task -> bottom of the task 2's kernel stack
+
+// #define TASK0_KERNEL_START_ADDR 0x00800000-4 							//start address of task 1's kernel stack
+// #define TASK1_KERNEL_START_ADDR TASK1_KERNEL_START_ADDR - EIGHT_KB 		//start address of task 2's kernel stack: 8kb above task 1's kernel stack
+
 
 // ADD TO .C FILE:
 // ===========================
@@ -17,26 +23,25 @@
 // ===========================
 
 
-
 #include "types.h"
 #include "lib.h"
 #include "x86_desc.h"
-
-extern pcb_t* curr_task;
-extern pcb_t* task1;
-extern pcb_t* task2;
-
+#include "paging.h"
+#include "fs.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 typedef struct operations_table_t {
-	int32_t (*read)(int32_t fd, void* buf, int32_t length);
-	int32_t (*write)(int32_t fd, const void* buf, int32_t nbytes);
-	int32_t (*open)(int32_t fd);
-	int32_t (*close) (int32_t fd);
+	int32_t (*read)(int32_t fd, uint8_t* buf, int32_t length);
+	int32_t (*write)(int32_t fd, uint8_t* buf, int32_t length);
+	int32_t (*open)(int32_t fd, uint8_t* buf, int32_t length);
+	int32_t (*close)(int32_t fd, uint8_t* buf, int32_t length);
 } operations_table_t;
+
 
 typedef struct file_descriptor_t{
 	operations_table_t* opt;
-	uint32_t inode_pointer;
+	int32_t inode_number;
 	uint32_t file_position;
 	uint32_t flags;
 } file_descriptor_t;
@@ -45,10 +50,13 @@ typedef struct pcb_t {
 	file_descriptor_t file_array[8];
 	uint32_t esp;
 	uint32_t ebp;
-	pcb_t* parent_task;
+	struct pcb_t* parent_task;
+	struct pcb_t* child_task;
+	uint32_t process_id;
+
 } pcb_t;
 
-
+extern pcb_t* curr_task;
 
 void set_interrupt_gate(uint8_t i);
 
@@ -93,5 +101,8 @@ extern int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3);
 extern int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3);
 extern int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t garbage3);
 extern int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3);
+
+int32_t get_next_pid();
+int32_t new_pcb();
 
 #endif

@@ -89,50 +89,33 @@ void clear_screen(void){
 }
 //read data from keyboard, return number of bytes read, read from terminanted line (enter)
 //calling terminal read should give me a clear buffer
-int32_t terminal_read(uint8_t* buf, int32_t nbytes){
-	if(buf == 0 || nbytes < 0)
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
+	if(buf == NULL || length < 0)
 		return -1;
 	//wait until ready to read
 	while(!kb_buf_read){}
-	int readbytes;
 	cli();
 
-	//memcpy(buf, kb_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN); 
-	memcpy(buf, out_buffer, nbytes < MAXBUFLEN ? nbytes:MAXBUFLEN); //this might need to be < index instead
-	// if(nbytes > kbbuf_index){
-	// 	int i;
-	// 	for(i = 0; i < kbbuf_index; i++){
-	// 		buf[i] = kb_buffer[i];
-	// 	}
-	// 	readbytes = i;
-	// }
-	// else{
-	// 	int i;
-	// 	for(i = 0; i < nbytes; i++){
-	// 		buf[i] = kb_buffer[i];
-	// 	}
-	// 	readbytes = i;
-	// }
+	memcpy(buf, out_buffer, length < MAXBUFLEN ? length:MAXBUFLEN); //this might need to be < index instead
 
-	//uint8_t i;
-	//for(i=0; i<MAXBUFLEN; i++)
-	//	kb_buffer[i] = '\0';
 	sti();
 	clear_buffer(0);
 	//after reading need to reset buffer index and ready to read
 	//kbbuf_index = 0;
 	kb_buf_read = 0;
 
-	return readbytes;
+	return length < MAXBUFLEN ? length:MAXBUFLEN;
 }
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
-int32_t terminal_write(const uint8_t* buf, int32_t nbytes){
+int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
+	
 	int byteswritten = 0;
-	if((buf == NULL) || (nbytes < 0))
+
+	if((buf == NULL) || (length < 0))
 		return -1;
 	int i;
 	cli();
-	for(i = 0; i < nbytes; i++){
+	for(i = 0; i < length; i++){
 		putc(buf[i]); //not sure this is right
 	}
 	sti();
@@ -140,11 +123,11 @@ int32_t terminal_write(const uint8_t* buf, int32_t nbytes){
 }
 
 //shouldn't ever get called but needs to exist... returns 0
-int32_t terminal_open(void){
+int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
 //same as terminal_open
-int32_t terminal_close(void){
+int32_t terminal_close(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
 

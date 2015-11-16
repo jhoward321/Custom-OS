@@ -3,11 +3,43 @@
 #include "i8259.h"
 #include "keyboard.h"
 #include "lib.h"
+#include "fs.h"
 
 #define KEYBOARD_IDT 33 			//Keyboard IDT value
 #define RTC_IDT 40 					//RTC IDT value
 #define SYSTEM_CALL_IDT 128 		//System Call IDT value
 #define DPL_SYS 3 					//DPL value necessary for system call situations
+#define READ 0
+#define WRITE 1
+#define OPEN 2
+#define CLOSE 3
+
+
+pcb_t* curr_task;
+
+static uint32_t pid_used[6] = {0,0,0,0,0,0};
+static pcb_t* PCB_ADDR[6] = {
+						PCB_ADDR0,
+						PCB_ADDR1,
+						PCB_ADDR2,
+						PCB_ADDR3,
+						PCB_ADDR4,
+						PCB_ADDR5
+};
+
+// int32_t (*file_operations[])(int32_t fd, uint8_t* buf, int32_t length) = {read_file, write_file, open_file, close_file};
+// int32_t (*dir_operations[])(int32_t fd, uint8_t* buf, int32_t length)  = {read_dir, write_dir, open_dir, close_dir};
+// int32_t (*rtc_operations[])(uint32_t freq)  = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+// int32_t (*stdin_operations[])(uint8_t* buf, int32_t nbytes) = {terminal_read, NULL, terminal_open, terminal_close};
+// int32_t (*stdout_operations[])(uint8_t* buf, int32_t nbytes) = {NULL, terminal_write, NULL, NULL};
+
+operations_table_t file_operations = {read_file, write_file, open_file, close_file};
+operations_table_t dir_operations = {read_dir, write_dir, open_dir, close_dir};
+operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+operations_table_t stdin_operations = {terminal_read, NULL, terminal_open, terminal_close};
+operations_table_t stdout_operations = {NULL, terminal_write, NULL, NULL};
+
+
 
 void set_exeptions(){
 	//20 interrupts defined by intel
@@ -199,6 +231,11 @@ void rtc_handler(){	//RTC
 
 
 
+// operations_table_t file_operations = {read_file, write_file, open_file, close_file};
+// operations_table_t dir_operations = {read_dir, write_dir, open_dir, close_dir};
+// operations_table_t rtc_operations = {rtc_read, rtc_write, rtc_open, rtc_close}; 
+// operations_table_t stdin_opt = {};
+// operations_table_t stdout_opt;
 
 
 int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
@@ -212,18 +249,68 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 }
 
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
+	
+	// fd has to be in range AND fd cannot be 1 (stdout)
+	if(fd < 0 || fd > 7 || fd == 1 || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
+		return -1;
 
-	return -1;
+
+	return curr_task->file_array[fd].opt->read(fd, buf, nbytes);
 }
 
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes){
 
-	return -1;
+	if(fd <= 0 || fd > 7 || curr_task->file_array[fd].flags == 0)
+		return -1;
+
+	return curr_task->file_array[fd].opt->write(fd, (uint8_t*)buf, nbytes);
+
 }
 
 int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
-	return -1;
+	dentry_t temp;
+	uint32_t fd;
+	uint32_t curr_available = -1;
+	//check if file exists
+	if (read_dentry_by_name(filename, &temp) == -1){
+		return -2; 				//return value for file doesn't exist
+	}
+
+	for(fd = 2; fd<8; fd++){ 		//go through the file array for the current pcb
+		if(curr_task->file_array[fd].flags == 0){
+			curr_available = fd;
+			break;
+		}
+	}
+
+	if(curr_available == -1)
+		return -1;
+
+	switch(temp.file_type){
+		case 0:
+			curr_task->file_array[curr_available].opt =  &rtc_operations;
+			rtc_open(0, NULL, 0);
+			break;
+
+		case 1:
+			curr_task->file_array[curr_available].opt = &dir_operations;  //CHECK THIS <====================
+			open_dir(curr_available, NULL, 0);
+			break;
+
+		case 2:
+			curr_task->file_array[curr_available].opt = &file_operations;  //CHECK THIS <====================
+			open_file(curr_available, NULL, 0);
+			break;
+		
+		default:
+			curr_task->file_array[curr_available].opt = &stdin_operations;
+			terminal_open(0, NULL, 0);
+			break;
+			
+	}
+
+	return curr_available;
 }
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
@@ -249,4 +336,57 @@ int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t garbage3)
 int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3){
 
 	return -1;
+}
+
+int32_t get_next_pid(){
+	int i;
+	for(i=0; i<6; i++){
+		if(pid_used[i] == 0)
+			return i;
+	}
+	return -1;
+}
+
+
+int32_t new_pcb(){
+	int next_pid = get_next_pid();
+	int i;
+
+	if(next_pid == -1)
+		return -1;
+	
+
+	pcb_t* retval = PCB_ADDR[next_pid];
+
+	for(i=2; i<8; i++){
+		retval->file_array[i].opt = NULL;
+		retval->file_array[i].inode_number = -1; 		//set an invalid value
+		retval->file_array[i].file_position = 0; 	//position 0
+		retval->file_array[i].flags = 0; 	//not in use
+	}
+
+	//set stdin:
+	retval->file_array[0].opt = &stdin_operations;
+	retval->file_array[0].inode_number = -1;
+	retval->file_array[0].file_position = 0;
+	retval->file_array[0].flags = 1;
+
+	//set stdout:
+	retval->file_array[1].opt = &stdout_operations;
+	retval->file_array[1].inode_number = -1;
+	retval->file_array[1].file_position = 0;
+	retval->file_array[1].flags = 1;
+
+	if(curr_task == NULL) 			// !!!!!!============SET CURR_TASK TO NULL IN KERNEL.C
+		curr_task->child_task = retval;
+
+	retval->parent_task = curr_task;
+	retval->child_task = NULL;
+	retval->process_id = next_pid;
+
+	curr_task = retval;
+	//esp and ebp not set.
+
+	return next_pid;
+
 }

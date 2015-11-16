@@ -44,7 +44,7 @@ void rtc_init(void){
 //will need an interrupt handler is in exceptions.c
 
 //return 0 after an interrupt has occurred
-int32_t rtc_read(){
+int32_t rtc_read(int32_t fd, uint8_t* buf, int32_t length){
 	interrupt_flag = 1;
 
 	while(interrupt_flag); //wait for interrupt to occur and then return 0
@@ -52,7 +52,8 @@ int32_t rtc_read(){
 	return 0;
 }
 
-int32_t rtc_write(uint32_t freq){
+int32_t rtc_write(int32_t fd, uint8_t* buf, int32_t length){
+	uint32_t freq = *((uint32_t*) buf);
 	int8_t rate;
 	char prev;
 
@@ -111,11 +112,11 @@ necessary to handle the given type of file (directory,RTC device, or regular fil
 named file does not exist or no descriptors are free, the call returns -1.
 */
 //init rtc to 2hz and return 0
-int32_t rtc_open(void){
+int32_t rtc_open(int32_t fd, uint8_t* buf, int32_t length){
 	rtc_init();
 	return 0;
 }
 
-int32_t rtc_close(void){
+int32_t rtc_close(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }

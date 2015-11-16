@@ -1,3 +1,7 @@
+#ifndef FS_H
+#define FS_H
+
+
 #include "types.h"
 #include "lib.h"
 #include "exceptions.h"
@@ -47,12 +51,16 @@ extern boot_block_t* boot_block;
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
-
-uint32_t read_dir(uint8_t* buf);
-
 int32_t write_data(uint32_t inode, uint32_t offset, const uint8_t* buf, uint32_t length);
 
-int32_t open_file(const uint8_t* fname);
-int32_t close_file(int32_t fd);
+int32_t read_file(int32_t fd, uint8_t* buf, int32_t length);
+int32_t write_file(int32_t fd, uint8_t* buf, int32_t length);
+int32_t open_file(int32_t fd, uint8_t* buf, int32_t length);
+int32_t close_file(int32_t fd, uint8_t* buf, int32_t length);
 
-int32_t file_name_cmp(const uint8_t* s1, const uint8_t* s2);
+int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length);
+int32_t write_dir(int32_t fd, uint8_t* buf, int32_t length);
+int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length);
+int32_t close_dir(int32_t fd, uint8_t* buf, int32_t length);
+
+#endif
