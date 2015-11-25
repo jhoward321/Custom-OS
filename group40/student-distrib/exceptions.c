@@ -247,18 +247,35 @@ void rtc_handler(){	//RTC
 //input is 8 bit value indicating status of current process
 //should never return to the caller
 int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
+
+	pid_used[curr_task->process_id] = FREE; //pid no longer used
+
 	//if process being killed is pid0, start shell again
 	//halt terminates a process, returning the specified value to its parent process
 	if(curr_task->parent_task == NULL){
+		//tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //should stay the same
+		//restore old esp/ebp values
+		// asm volatile(
+		// 	"movl %0, %%esp"
+		// 	:"=r"(curr_task->esp)
+		// );
+		// asm volatile(
+		// 	"movl %0, %%ebp"
+		// 	:"=r"(curr_task->ebp)
+		// );
+		//might need to restore paging but I think it's fine without since its restarting same process
+		curr_task = NULL;
 		sys_execute((uint8_t*)"shell", 0,0);
 	}
 
-	pid_used[curr_task->process_id] = FREE; //no longer used
+	
 	//store parents ebp/esp values before changing curr_task
 	//uint32_t parentebp = curr_task->ebp;
 	//uint32_t parentesp = curr_task->esp;
 	//uint32_t parenteip = curr_task->eip;
 	curr_task = curr_task->parent_task;
+	pcb_t* oldtask = curr_task->child_task;
+	curr_task->child_task = NULL;
 	//curr_task->child_task = NULL;
 
 	//restore parents paging
@@ -278,7 +295,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 		jmp HALT_RET_LABEL \n\
 		"
 		:
-		:"r"(ret), "r"(curr_task->child_task->esp), "r"(curr_task->child_task->ebp)
+		:"r"(ret), "r"(oldtask->esp), "r"(oldtask->ebp)
 		:"cc"
 	);
 
