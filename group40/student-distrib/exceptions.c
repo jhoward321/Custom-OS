@@ -253,17 +253,6 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	//if process being killed is pid0, start shell again
 	//halt terminates a process, returning the specified value to its parent process
 	if(curr_task->parent_task == NULL){
-		//tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //should stay the same
-		//restore old esp/ebp values
-		// asm volatile(
-		// 	"movl %0, %%esp"
-		// 	:"=r"(curr_task->esp)
-		// );
-		// asm volatile(
-		// 	"movl %0, %%ebp"
-		// 	:"=r"(curr_task->ebp)
-		// );
-		//might need to restore paging but I think it's fine without since its restarting same process
 		curr_task = NULL;
 		sys_execute((uint8_t*)"shell", 0,0);
 	}
