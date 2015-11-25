@@ -118,6 +118,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 	cli();
 	for(i = 0; i < length; i++){
 		putc(buf[i]); //not sure this is right
+		byteswritten++;
 	}
 	sti();
 	return byteswritten;
