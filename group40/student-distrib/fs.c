@@ -169,7 +169,7 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 	for(i = 0; i < strlen((int8_t*)temp.file_name); i++){
 		buf[i] = temp.file_name[i];
 	}
-	buf[i+1] = '\n'; //might want to null terminate instead but we'll try this
+	buf[i+1] = '\0'; //might want to null terminate instead but we'll try this
 
 	dir_index++; //increment read file index
 	return i; //i is same as doing strlen(buf) but we already have it calculated
