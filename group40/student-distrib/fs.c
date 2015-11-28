@@ -158,7 +158,7 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	//is this right berk? not sure if i interpreted this part right
 	//i moved index to dir_index which is global
-	if(dir_index > MAX_NUM_FILES){
+	if(dir_index >= boot_block->total_dirs){
 		dir_index = 0;
 		return 0;
 	}
