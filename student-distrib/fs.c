@@ -2,6 +2,8 @@
 
 boot_block_t* boot_block;
 
+uint32_t dir_index = 0; //file directory index
+
 //search the file system for
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
@@ -154,20 +156,23 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	dentry_t temp;
 
-	int index = 0;
-	int i, j;
-
-	for(i=0; i<MAX_NUM_FILES; i++){
-		if(read_dentry_by_index(i, &temp) == 0){
-			for(j=0; j<MAX_FILE_NAME_LENGTH; j++){
-				buf[index++] = temp.file_name[j];
-			}
-			buf[index++] ='\n';
-		}
+	//is this right berk? not sure if i interpreted this part right
+	//i moved index to dir_index which is global
+	if(dir_index > MAX_NUM_FILES){
+		dir_index = 0;
+		return 0;
 	}
+	
+	int i;
+	read_dentry_by_index(dir_index, &temp);
 
-	return index;
+	for(i = 0; i < strlen((int8_t*)temp.file_name); i++){
+		buf[i] = temp.file_name[i];
+	}
+	buf[i+1] = '\n'; //might want to null terminate instead but we'll try this
 
+	dir_index++; //increment read file index
+	return i; //i is same as doing strlen(buf) but we already have it calculated
 }
 
 int32_t write_dir(int32_t fd, uint8_t* buf, int32_t length){
