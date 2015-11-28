@@ -455,8 +455,10 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 	if (read_dentry_by_name(filename, &temp) == INVALID){
 		return -2; 				//return value for file doesn't exist
 	}
-	if(curr_task->file_array[fd].opt->open == NULL)
-		return -1;
+
+	//commented out because causes a page fault if fd hasnt been assigned yet, gets assigned later
+	// if(curr_task->file_array[fd].opt->open == NULL)
+	// 	return -1;
 
 	for(fd = PCB_START; fd<PCB_END; fd++){ 		//go through the file array for the current pcb
 		if(curr_task->file_array[fd].flags == 0){
