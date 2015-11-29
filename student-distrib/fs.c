@@ -19,11 +19,13 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 	//make sure MAX_FILE_NAME_LENGTH doesn't exceed max length allowed for file length
 	name_length = (name_length > MAX_FILE_NAME_LENGTH-1) ? MAX_FILE_NAME_LENGTH-1 : name_length;
 
-	uint32_t i;										//iterator
-
+											//iterator
+	uint32_t i;
 	//changed to strncmp instead, because the file name strings used in kernel.c won't have a zero-padding
 	for(i=0; i<boot_block->total_dirs; i++){
 		if (strncmp((int8_t*)fname, (int8_t*)boot_block->dir_entries[i].file_name, name_length) == 0) {
+			if (name_length != MAX_FILE_NAME_LENGTH && boot_block->dir_entries[i].file_name[name_length] != 0)	//if file has characters after name length then strings are not equal
+				return -1;
 			memcpy(dentry, &boot_block->dir_entries[i], DENTRY_SIZE);
 			return 0;
 		}
@@ -128,7 +130,7 @@ int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 	uint32_t offset = curr_task->file_array[fd].file_position;
 	uint32_t read_amount = read_data(curr_inode_number, offset, buf, length);
 	curr_task->file_array[fd].file_position += read_amount;
-	
+
 	return read_amount;
 }
 
@@ -162,7 +164,7 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 		dir_index = 0;
 		return 0;
 	}
-	
+
 	int i;
 	read_dentry_by_index(dir_index, &temp);
 
@@ -190,4 +192,3 @@ int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length){
 int32_t close_dir(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
-
