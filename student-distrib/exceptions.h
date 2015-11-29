@@ -42,6 +42,9 @@
 #define STDIN 0
 #define STDOUT 1
 #define INVALID -1
+#define _128MB 0x08000000
+#define _132MB 0x08400000
+#define VIRT_VID_INDEX 33 //index in page directory for 132MB
 
 
 

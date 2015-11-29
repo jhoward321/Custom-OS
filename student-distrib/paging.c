@@ -23,6 +23,9 @@
 #define PAGE_DIREC_SIZE_MASK 0x80 		//Mask to set Page Directory Size: stores the page size for that specific entry. (4MB)
 #define FOUR_MB 0x0400000
 #define USERBIT 0x4
+#define VIRT_VID_INDEX 33
+#define USERREADPRESENT 7
+
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
@@ -83,6 +86,12 @@ void paging_init(){
 void add_page(uint32_t pde, uint32_t pd_index){
 	page_directory[pd_index] = pde;
 }
+//will need to change some things for new terminals
+void add_vidpage(){
+	page_directory[VIRT_VID_INDEX] = page_directory[0];
+	page_directory[VIRT_VID_INDEX] |= USERREADPRESENT; //just in case
+}
+
 uint32_t calc_pde_val(uint32_t processid){
 	uint32_t pde = (FOUR_MB + (processid + 1) * FOUR_MB) | USERBIT | PAGE_DIREC_SIZE_MASK | PRESENT;
 	return pde;
