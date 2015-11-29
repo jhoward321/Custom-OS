@@ -521,7 +521,13 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 
 int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3){
 
-	return -1;
+	//check to make sure screen_start is a valid address, should it be > or >=?
+	if(screen_start < (uint8_t **) _128MB || screen_start >= (uint8_t **) _132MB)
+		return -1;
+
+	add_vidpage();
+	*screen_start = (uint8_t*) _132MB; //want screen_start to point to 4kb thats at 132MB
+	return 0;
 }
 
 int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t garbage3){
