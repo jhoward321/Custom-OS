@@ -121,6 +121,7 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 		byteswritten++;
 	}
 	sti();
+	update_cursor(screen_x, screen_y);
 	return byteswritten;
 }
 
@@ -255,8 +256,10 @@ void keyboard_handler(void){
 					//ctl L means clear screen
 					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
-						clear_screen();
+						//clear_screen();	old way
+						scroll_to_top();	//moves current line and lower up to the top of the terminal
 						clear_buffer(1);
+						update_cursor(screen_x, screen_y);
 						//kbbuf_index = 0;
 						break;
 					}
