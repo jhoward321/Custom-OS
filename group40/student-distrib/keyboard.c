@@ -253,16 +253,26 @@ void keyboard_handler(void){
 			default:
 				if(!(scancode & KB_PRESS_MASK)){
 
-					//ctl L means clear screen
+					//ctl+L clears screen
 					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
-						clear_screen();
-						//scroll_to_top();	//moves current line and lower up to the top of the terminal
-						clear_buffer(1);
-						printf("391OS> ");
+						//clear_screen();
+						//clear_buffer(1);
+						scroll_to_top();	//moves current line and lower up to the top of the terminal
 						update_cursor(screen_x, screen_y);
-						//kbbuf_index = 0;
 						break;
+					}
+					//ctrl+C terminates a program
+					if(keyboard_status.ctrl && scancode == C){
+							send_eoi(KEYBOARD_IRQ);	//have to send keyboard eoi since we won't return
+							int8_t ret = 1;	//return value to shell set this to whatever we want
+							asm volatile("	movl $1, %%eax \n\
+									movl %0, %%ebx  \n\
+									int $0x80"
+									:
+									:"g"(ret)
+									:"memory", "eax"
+									);
 					}
 					//no shift no caps
 					else if(!keyboard_status.shift && !keyboard_status.capslock){

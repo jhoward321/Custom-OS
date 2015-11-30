@@ -27,6 +27,7 @@
 #define LALT_OFF 0xB8
 #define CAPSLOCK 0x3A
 #define L 0x26
+#define C 0x2E
 
 //copied from lib.c
 #define VIDEO 0xB8000

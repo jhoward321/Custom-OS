@@ -7,6 +7,7 @@
 #define NUM_COLS 80
 #define NUM_ROWS 25
 #define ATTRIB 0x7
+#define MAXBUFLEN 128
 
 int screen_x;
 int screen_y;
@@ -216,6 +217,20 @@ void scroll_screen(){
 }
 
 
+/*
+ *  scrolls the screen to the top, then erases below the
+ */
+void scroll_to_top(){
+  if(screen_y != 0){
+    memmove(video_mem, video_mem + ((NUM_COLS * screen_y) << 1), (MAXBUFLEN)<<1);
+    int32_t i;
+    for(i=MAXBUFLEN; i<NUM_ROWS*NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+    screen_y = 0;
+  }
+}
 
 /*
 * int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

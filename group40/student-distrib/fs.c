@@ -125,15 +125,12 @@ int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 	uint32_t curr_inode_number = curr_task->file_array[fd].inode_number;
 
 	uint32_t file_len = read_file_length(curr_inode_number);
-	if(file_len == curr_task->file_array[fd].file_position)
+	if(file_len <= curr_task->file_array[fd].file_position)
 		return 0;
 
 
 	uint32_t offset = curr_task->file_array[fd].file_position;
 	uint32_t read_amount = read_data(curr_inode_number, offset, buf, length);
-	// if (read_amount == 0){
-	// 	read_amount = strlen((int8_t*)buf);
-	// }
 	curr_task->file_array[fd].file_position += read_amount;
 	return read_amount;
 }
