@@ -30,7 +30,7 @@ void rtc_init(void){
 	//turn on bit 6 of register B
 	outb(prev | RTC_BIT6_EN, RTC_MEM);
 	//rate must be above 2 and not over 15
-	int rate = RTC_RATE;
+	int rate = (int) RTC_RATE;
 	rate &= RTC_MASK1;
  	// select register A for reading
  	cli();

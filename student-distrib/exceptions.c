@@ -471,6 +471,8 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
 	//SET INODE NUMBER
 	curr_task->file_array[curr_available].inode_number = temp.inode_number;
+	curr_task->file_array[curr_available].flags = USED;
+
 
 	switch(temp.file_type){
 		case 0:
