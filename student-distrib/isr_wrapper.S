@@ -27,19 +27,21 @@ ex_128:
 
 
 	pushal
-        pushl %edx
-        pushl %ecx
-        pushl %ebx
+  pushl %edx
+  pushl %ecx
+  pushl %ebx
 
+  cmpl $0, %eax		#compare to 0, no sys call 0
+  je ret_error		#ret error when sys call is greater than 10
 
 	cmpl $10, %eax		#compare to 10, the max number of sys calls
 	ja ret_error		#ret error when sys call is greater than 10
-        call *jumptable(,%eax,4)#call handler
+  call *jumptable(,%eax,4)#call handler
 	movl %eax, ret_save
 	addl $12, %esp
 	popal
 	movl ret_save, %eax
-        iret
+  iret
 
 
  #       popa			#restore all regs
