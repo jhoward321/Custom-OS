@@ -90,7 +90,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 		//EOF reached ?
 		if (byte_position == file_length){
-			return 0;
+			return read_count;
 		}
 		//end of block reached? : read from next block
 		if(byte_position % BYTES_PER_BLOCK == 0){
@@ -127,6 +127,12 @@ uint32_t read_file_length(uint32_t inode){
 int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 
 	uint32_t curr_inode_number = curr_task->file_array[fd].inode_number;
+
+	uint32_t file_len = *((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (curr_inode_number + 1)));
+	if(file_len == curr_task->file_array[fd].file_position)
+		return 0;
+
+
 	uint32_t offset = curr_task->file_array[fd].file_position;
 	uint32_t read_amount = read_data(curr_inode_number, offset, buf, length);
 	curr_task->file_array[fd].file_position += read_amount;
@@ -145,7 +151,7 @@ int32_t open_file(int32_t fd, uint8_t* buf, int32_t length){
 }
 
 int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
-
+	curr_task->file_array[fd].file_position = 0;
 	curr_task->file_array[fd].flags = FREE;
 	return 0;
 }
