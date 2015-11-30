@@ -79,6 +79,7 @@ typedef struct pcb_t {
 	struct pcb_t* child_task;
 	uint32_t process_id;
 	uint32_t eip;
+	uint8_t arg[CHAR_BUFF_SIZE];
 } pcb_t;
 
 extern pcb_t* curr_task;
@@ -128,6 +129,6 @@ extern int32_t sys_set_handler(int32_t signum, void* handler_address, int32_t ga
 extern int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3);
 
 int32_t get_next_pid();
-int32_t new_pcb();
+int32_t new_pcb(int8_t* arguments);
 
 #endif
