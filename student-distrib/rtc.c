@@ -39,14 +39,14 @@ void rtc_init(void){
 	outb(RTC_REG_A, RTC_CMD);
 	outb((prev & RTC_MASK2) | rate, RTC_MEM);
 	sti();
-	// enable_irq(RTC_IRQ);
+	enable_irq(RTC_IRQ);
 }
 //will need an interrupt handler is in exceptions.c
 
 //return 0 after an interrupt has occurred
 int32_t rtc_read(int32_t fd, uint8_t* buf, int32_t length){
 	interrupt_flag = 1;
-
+  sti();
 	while(interrupt_flag); //wait for interrupt to occur and then return 0
 
 	return 0;
