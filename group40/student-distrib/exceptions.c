@@ -224,7 +224,7 @@ void rtc_handler(){	//RTC
 	//dont care about contents
 	inb(RTC_MEM);
 
-	test_interrupts(); //for checkpoint 1 - in lib.c
+	//test_interrupts(); //for checkpoint 1 - in lib.c
 
 	send_eoi(RTC_IRQ); //interrupt is over
 	interrupt_flag = 0; //clear flag now that interrupt is over
@@ -257,7 +257,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 		sys_execute((uint8_t*)"shell", 0,0);
 	}
 
-	
+
 	//store parents ebp/esp values before changing curr_task
 	//uint32_t parentebp = curr_task->ebp;
 	//uint32_t parentesp = curr_task->esp;
@@ -427,7 +427,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 
 	// fd has to be in range AND fd cannot be 1 (stdout)
-	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes < NULL || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
+	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
 		return -1;
 	if(curr_task->file_array[fd].opt->read == NULL)
 		return -1;
@@ -505,16 +505,16 @@ int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 	if (fd == STDIN || fd ==  STDOUT) {
 		return -1;
 	}
-	
+
 	if(curr_task->file_array[fd].flags == FREE) {
 		return -1;
 	}
-	
+
 	curr_task->file_array[fd].opt = NULL;
 	curr_task->file_array[fd].inode_number = INVALID_INODE;
 	curr_task->file_array[fd].file_position = NULL;
 	curr_task->file_array[fd].flags = FREE;
-	
+
 	return 0;
 }
 

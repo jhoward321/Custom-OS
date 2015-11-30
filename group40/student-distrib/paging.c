@@ -92,8 +92,8 @@ void add_page(uint32_t pde, uint32_t pd_index){
 }
 //will need to change some things for new terminals
 void add_vidpage(){
-	
-	page_directory[VIRT_VID_INDEX] = &video_page_table;
+
+	page_directory[VIRT_VID_INDEX] = (uint32_t) &video_page_table;
 	page_directory[VIRT_VID_INDEX] |= USERREADPRESENT; //just in case
 	reset_cr3();
 }
