@@ -324,10 +324,11 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//if flag has been set then we have arguments and need to parse
 	char program[CHAR_BUFF_SIZE];
 	char arguments[CHAR_BUFF_SIZE];
-	// for(i = 0; i < CHAR_BUFF_SIZE; i++){
-	// 	//program[i] = '\0';
-	// 	arguments[i] = '\0';
-	// }
+	int j;
+	for(j = 0; j < CHAR_BUFF_SIZE; j++){
+		//program[i] = '\0';
+		arguments[j] = '\0';
+	}
 	if(argsflag == 1){
 		//arguments exist, need to parse out arguments
 		strncpy(program, (int8_t *) command, i);
