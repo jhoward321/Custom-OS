@@ -532,9 +532,14 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 	}
 
 	int i;
+	for(i=0; i<nbytes; i++){
+		buf[i] = '\0';
+	}
+
 	for(i=0; i<arg_length; i++){
 		buf[i] = arguments[i];
 	}
+
 
 	return 0;
 
