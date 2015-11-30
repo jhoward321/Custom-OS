@@ -256,9 +256,10 @@ void keyboard_handler(void){
 					//ctl L means clear screen
 					if(keyboard_status.ctrl && scancode == L){
 						//call clear screen
-						//clear_screen();	old way
-						scroll_to_top();	//moves current line and lower up to the top of the terminal
+						clear_screen();
+						//scroll_to_top();	//moves current line and lower up to the top of the terminal
 						clear_buffer(1);
+						printf("391OS> ");
 						update_cursor(screen_x, screen_y);
 						//kbbuf_index = 0;
 						break;

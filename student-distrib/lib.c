@@ -215,19 +215,6 @@ void scroll_screen(){
         screen_y--;                     //decrement the y screen location
 }
 
-/*
- * when called the current line (screen_y) and below is scrolled to the top of the screen
- */
-void scroll_to_top(){
-  memmove(video_mem, video_mem + ((NUM_COLS * screen_y) << 1), (NUM_COLS * (NUM_ROWS-screen_y))<<1);//shift memory up from screen_y to the top of the screen
-  int32_t i;
-  for(i=screen_y; i<NUM_ROWS*NUM_COLS; i++) {   //clear screen but only from screen_y and lower
-      *(uint8_t *)(video_mem + (i << 1)) = ' ';
-      *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
-  }
-  screen_y = 0;   //reset screen_y to 0
-}
-
 
 
 /*
