@@ -63,7 +63,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	//printf("Data block base address = %d\n",data_block_0_address);
 
 	//address of current data block number to be read (list of data block numbers are stored in the inode)
-	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + offset/BYTES_PER_BLOCK + sizeof(uint32_t)); 	// 4 = sizeof(int)
+	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + (offset/BYTES_PER_BLOCK)*4 + sizeof(uint32_t)); 	// 4 = sizeof(int)
+	
 	//printf("Current data block index address = %d\n", curr_data_block_index_addr);
 	//current data block number to be read (stored in the inode)
 	uint32_t curr_data_block_index = *curr_data_block_index_addr;
@@ -79,6 +80,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 	//variable to check how far in the file we are reading
 	byte_position = offset + read_count;
+
+
 
 	while(length > read_count){
 
@@ -123,11 +126,10 @@ uint32_t read_file_length(uint32_t inode){
 int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 
 	uint32_t curr_inode_number = curr_task->file_array[fd].inode_number;
-
 	uint32_t file_len = read_file_length(curr_inode_number);
+
 	if(file_len <= curr_task->file_array[fd].file_position)
 		return 0;
-
 
 	uint32_t offset = curr_task->file_array[fd].file_position;
 	uint32_t read_amount = read_data(curr_inode_number, offset, buf, length);

@@ -426,6 +426,11 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 
+	int i;
+	for (i=0; i<nbytes; i++){
+		((int8_t*)buf)[i] = '\0';
+	}
+
 	// fd has to be in range AND fd cannot be 1 (stdout)
 	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
 		return -1;
