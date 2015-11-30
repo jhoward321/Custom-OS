@@ -324,11 +324,11 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//if flag has been set then we have arguments and need to parse
 	char program[CHAR_BUFF_SIZE];
 	char arguments[CHAR_BUFF_SIZE];
-	// for(i = 0; i < 500; i++){
-	// 	program[i] = '\0';
+	// for(i = 0; i < CHAR_BUFF_SIZE; i++){
+	// 	//program[i] = '\0';
 	// 	arguments[i] = '\0';
 	// }
-	if(argsflag == USED){
+	if(argsflag == 1){
 		//arguments exist, need to parse out arguments
 		strncpy(program, (int8_t *) command, i);
 		program[i] = '\0';
@@ -528,19 +528,19 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 	if (buf == NULL){
 		return -1;
 	}
-
+	int i;
+	for(i=0; i<nbytes; i++){
+		buf[i] = '\0';
+	}
 	uint8_t* arguments = curr_task->arg;
+	if(arguments[0] == '\0')
+		return -1;
 
 	uint32_t arg_length = strlen((int8_t*)arguments);
 
 	//fits in buffer?
 	if (nbytes <= arg_length){
 		return -1;
-	}
-
-	int i;
-	for(i=0; i<nbytes; i++){
-		buf[i] = '\0';
 	}
 
 	for(i=0; i<arg_length; i++){
@@ -626,12 +626,12 @@ int32_t new_pcb(int8_t* arguments){
 		retval->process_id = next_pid;
 	}
 
-	uint32_t arg_length = strlen(arguments);
-	if(arg_length > CHAR_BUFF_SIZE){
-		arg_length = CHAR_BUFF_SIZE-1;
-	}
+	// uint32_t arg_length = strlen(arguments);
+	// if(arg_length > CHAR_BUFF_SIZE){
+	// 	arg_length = CHAR_BUFF_SIZE-1;
+	// }
 
-	for(i=0; i<arg_length; i++){
+	for(i=0; i<CHAR_BUFF_SIZE; i++){
 		retval->arg[i] = arguments[i];
 	}
 
