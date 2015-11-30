@@ -340,6 +340,9 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	else{
 		strncpy(program, (int8_t *)command, strlen((int8_t *) command) + 1); //+1 copies over null terminator
 		arguments[0] = '\0';
+		for(i=0; i<500; i++){
+			arguments[i] = '\0';
+		}
 	}
 
 	//done parsing arguments, make sure executable
@@ -459,7 +462,7 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 	uint32_t curr_available = INVALID;
 	//check if file exists
 	if (read_dentry_by_name(filename, &temp) == INVALID){
-		return -2; 				//return value for file doesn't exist
+		return -1; 				//return value for file doesn't exist
 	}
 
 	//commented out because causes a page fault if fd hasnt been assigned yet, gets assigned later
