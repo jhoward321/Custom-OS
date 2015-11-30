@@ -19,16 +19,18 @@
 #define NOT_PRESENT 0x00000002 			//key for mapping kernel as not present
 #define PRESENT 0x00000003 				//key for mapping kernel as present, and read/write
 #define KERNEL_VIRTADR 0x400000 		//kernel virtual address (4MB)
-#define VID_MEM_LOC 0xB8 				//video memory location
+#define VID_MEM_LOC 0xB8 				//video memory location, = 184 in decimal
 #define PAGE_DIREC_SIZE_MASK 0x80 		//Mask to set Page Directory Size: stores the page size for that specific entry. (4MB)
 #define FOUR_MB 0x0400000
 #define USERBIT 0x4
-#define VIRT_VID_INDEX 33
+#define VIRT_VID_INDEX 33				//maps to 132MB
 #define USERREADPRESENT 7
 
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
+uint32_t video_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
+
 
 //enables paging
 void paging_init(){
@@ -47,7 +49,9 @@ void paging_init(){
 	}
 
 
-	first_page_table[VID_MEM_LOC] = (VID_MEM_LOC * ALIGN_SIZE) | PRESENT; //map memory 0mb to 4mb to the table
+	first_page_table[VID_MEM_LOC] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
+	video_page_table[0] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
+
 	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
 	//directory 1 is kernel
 	page_directory[1] = KERNEL_VIRTADR | (PAGE_DIREC_SIZE_MASK | PRESENT); //map kernel as present
@@ -88,8 +92,10 @@ void add_page(uint32_t pde, uint32_t pd_index){
 }
 //will need to change some things for new terminals
 void add_vidpage(){
-	page_directory[VIRT_VID_INDEX] = page_directory[0];
+	
+	page_directory[VIRT_VID_INDEX] = &video_page_table;
 	page_directory[VIRT_VID_INDEX] |= USERREADPRESENT; //just in case
+	reset_cr3();
 }
 
 uint32_t calc_pde_val(uint32_t processid){
