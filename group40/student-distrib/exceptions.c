@@ -508,7 +508,7 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 
-	if (fd == STDIN || fd ==  STDOUT) {
+	if (fd <= STDIN || fd ==  STDOUT) {
 		return -1;
 	}
 
