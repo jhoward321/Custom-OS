@@ -112,11 +112,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 //returns the given file length represented by the inode (all calculations are copied from the above read_data function)
 uint32_t read_file_length(uint32_t inode){
-	//address of the current inode where data will be extracted
-	uint32_t* curr_inode_address = ((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
-	//first element of the inode structure gives the length of the file to be read
-	uint32_t file_length = *curr_inode_address;
-	return file_length;
+	return *((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
 }
 
 
@@ -128,7 +124,7 @@ int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 
 	uint32_t curr_inode_number = curr_task->file_array[fd].inode_number;
 
-	uint32_t file_len = *((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (curr_inode_number + 1)));
+	uint32_t file_len = read_file_length(curr_inode_number);
 	if(file_len == curr_task->file_array[fd].file_position)
 		return 0;
 
@@ -151,7 +147,6 @@ int32_t open_file(int32_t fd, uint8_t* buf, int32_t length){
 }
 
 int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
-	curr_task->file_array[fd].file_position = 0;
 	curr_task->file_array[fd].flags = FREE;
 	return 0;
 }
