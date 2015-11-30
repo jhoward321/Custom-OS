@@ -371,7 +371,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	read_data(fileinfo.inode_number, 0, progbuf, filelength);
 
 	//New PCB
-	new_pcb();
+	new_pcb(arguments);
 
 	//context switch
 
@@ -466,9 +466,11 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 			break;
 		}
 	}
-
 	if(curr_available == INVALID)
 		return -1;
+
+	//SET INODE NUMBER
+	curr_task->file_array[curr_available].inode_number = temp.inode_number;
 
 	switch(temp.file_type){
 		case 0:
@@ -516,7 +518,27 @@ int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 
-	return -1;
+	if (buf == NULL){
+		return -1;
+	}
+
+	uint8_t* arguments = curr_task->arg;
+
+	uint32_t arg_length = strlen((int8_t*)arguments);
+
+	//fits in buffer?
+	if (nbytes <= arg_length){
+		return -1;
+	}
+
+	int i;
+	for(i=0; i<arg_length; i++){
+		buf[i] = arguments[i];
+	}
+
+	return 0;
+
+
 }
 
 int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3){
@@ -550,7 +572,7 @@ int32_t get_next_pid(){
 }
 
 
-int32_t new_pcb(){
+int32_t new_pcb(int8_t* arguments){
 	int next_pid = get_next_pid();
 	int i;
 
@@ -590,6 +612,15 @@ int32_t new_pcb(){
 		retval->parent_task = curr_task;
 		retval->child_task = NULL;
 		retval->process_id = next_pid;
+	}
+
+	uint32_t arg_length = strlen(arguments);
+	if(arg_length > CHAR_BUFF_SIZE){
+		arg_length = CHAR_BUFF_SIZE-1;
+	}
+
+	for(i=0; i<arg_length; i++){
+		retval->arg[i] = arguments[i];
 	}
 
 	curr_task = retval;
