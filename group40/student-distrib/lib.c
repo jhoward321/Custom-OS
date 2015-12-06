@@ -6,13 +6,14 @@
 #define VIDEO 0xB8000
 #define NUM_COLS 80
 #define NUM_ROWS 25
-#define ATTRIB 0x7
+//#define ATTRIB 0x7
 #define MAXBUFLEN 128
+
 
 int screen_x;
 int screen_y;
 static char* video_mem = (char *)VIDEO;
-
+uint8_t ATTRIB = 0x07;
 /*
 * void clear(void);
 *   Inputs: void
@@ -232,6 +233,24 @@ void scroll_to_top(){
   }
 }
 
+void text_color(uint8_t shift){
+  if(shift){
+      ATTRIB += 0x10;
+  }
+  else
+  {
+    if ((ATTRIB & 0x0F) != 15)
+      ATTRIB += 1;
+    else
+      ATTRIB &= 0xF0;
+  }
+
+
+  int32_t i;
+  for(i=0; i<NUM_ROWS*NUM_COLS; i++)
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+
+}
 /*
 * int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
 *   Inputs: uint32_t value = number to convert
