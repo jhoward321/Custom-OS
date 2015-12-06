@@ -273,6 +273,8 @@ entry (unsigned long magic, unsigned long addr)
 	curr_task[0] = NULL; 			//set first task to 0
 	curr_task[1] = NULL; 			//set first task to 0
 	curr_task[2] = NULL; 			//set first task to 0
+	//set initial terminal to 0
+	current_terminal = 0;
 
 	// sys_execute((uint8_t *)"shell", 0, 0);
 	int8_t* file = "shell\0";

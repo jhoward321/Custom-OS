@@ -10,7 +10,7 @@
 #define MAXBUFLEN 128 			//character buffer length, used for I/O
 //#define TERMINAL_BUF_LEN 1024
 #define KBKEY_ARRAY 4
-//#define NUM_TERMINALS 3
+#define NUM_TERMINALS 3
 #define FOURKB 4096
 
 //special keycodes
@@ -26,6 +26,9 @@
 #define LALT_ON 0x38
 #define LALT_OFF 0xB8
 #define CAPSLOCK 0x3A
+#define F1 0x3B
+#define F2 0x3C
+#define F3 0x3D
 #define L 0x26
 #define C 0x2E
 
@@ -40,6 +43,11 @@
 extern uint8_t kb_index;
 extern uint8_t kb_in_buffer[MAXBUFLEN]; //this will probably need to be modified for checkpoint 2 which specifies the 128 length buffer
 uint8_t kb_out_buffer[MAXBUFLEN];
+
+extern int terminal_screenx[NUM_TERMINALS];
+extern int terminal_screeny[NUM_TERMINALS];
+extern int current_terminal;
+//extern int num_terminals;
 
 typedef struct kb_flags_t{
 	//flags for keyboard state
@@ -185,6 +193,7 @@ void keyboard_handler(void); //exception handler for keyboard
 void clear_screen(void);
 void clear_buffer(int clear_keyboard);
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length);
+int32_t terminal_switch(int newterminalindex);
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length);
 int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length);
 int32_t terminal_close(int32_t fd, uint8_t* buf, int32_t length);

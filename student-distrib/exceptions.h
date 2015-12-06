@@ -84,7 +84,7 @@ typedef struct pcb_t {
 } pcb_t;
 
 extern pcb_t* curr_task[MAX_TERMINALS];
-extern int current_terminal;
+//extern int current_terminal;
 
 void set_pcbs();
 

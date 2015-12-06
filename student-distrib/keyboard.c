@@ -59,6 +59,10 @@ uint8_t out_buffer[MAXBUFLEN];
 uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
+//these will store screen positions when switching terminals - moved to header, externally visible
+//int terminal_screenx[3];
+//int terminal_screeny[3]; 
+
 //typedef enum {false, true} bool;
 
 //true if want to clear keyboard buffer, false if want to clear out buffer
@@ -107,6 +111,37 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 
 	return length < MAXBUFLEN ? length:MAXBUFLEN;
 }
+//switch to new terminal specified, return 1 on success, 0 on failure
+int32_t terminal_switch(int newterminalindex){
+	//there are only 3 possible terminals: 0, 1, 2
+	if(newterminalindex < 0 || newterminalindex > 2){
+		return -1;
+	}
+	//save screen positions
+	terminal_screenx[current_terminal] = screen_x;
+	terminal_screeny[current_terminal] = screen_y;
+	//get page address, first video page is at 132MB, each new page is 4kb later
+	uint8_t* temppage = get_terminal_back_page(current_terminal);
+	//copy video memory into backing page
+	memcpy(temppage, (uint8_t *) VIDEO, FOURKB);
+	uint8_t* newpage = get_terminal_back_page(newterminalindex);
+	
+	//copy next terminals stuff to video memory
+	memcpy((uint8_t *) VIDEO, newpage, FOURKB);
+
+
+
+	//still need to update current terminal
+
+	current_terminal = newterminalindex;
+
+	screen_x = terminal_screenx[current_terminal]; //current_terminal will have been updated in terminal switch
+	screen_y = terminal_screeny[current_terminal];
+
+	update_cursor(screen_x, screen_y);
+
+	return 0;
+}
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 
@@ -154,6 +189,9 @@ void keyboard_init(void){
 	keyboard_status.capslock = 0;
 	kb_buf_read = 0;
 	kbbuf_index = 0;
+
+	//initial terminal index
+	current_terminal = 0;
 
 	int j;
 	for(j = 0; j < MAXBUFLEN; j++){
@@ -275,6 +313,45 @@ void keyboard_handler(void){
 									:"g"(ret)
 									:"memory", "eax"
 									);
+							break;
+					}
+
+					/*
+					TERMINAL SWITCHING NOTES
+					will need to store screen position for each terminal, need to track current terminal
+					need to store video memory of each terminal
+					probably need separate keyboard buffers for each terminal
+					probably some more stuff I'm missing
+					need to initialize current_terminal somewhere, probably in kernel on boot
+					*/
+
+
+
+
+					//switch terminal case, F2 is 3C, F1 is 3B, alt f2 is 69? alt f1 is 68 - not sure if want these
+					else if(keyboard_status.alt && scancode == F1){
+						//save screen positions
+						//terminal_screenx[current_terminal] = screen_x;
+						//terminal_screeny[current_terminal] = screen_y;
+
+						//call terminal switching function - still need to write
+
+						//can either get new screen position here or in terminal switch
+						//would be something like this:
+						//screen_x = terminal_screenx[current_terminal]; //current_terminal will have been updated in terminal switch
+						//screen_y = terminal_screeny[current_terminal];
+
+						//update_cursor(screen_x, screen_y);
+
+						break;
+					}
+					//F2 case
+					else if(keyboard_status.alt && scancode == F2){
+						break;
+					}
+					//F3 case
+					else if(keyboard_status.alt && scancode == F3){
+						break;
 					}
 
 					else if(keyboard_status.ctrl && keyboard_status.shift && scancode == TAB){
@@ -283,6 +360,7 @@ void keyboard_handler(void){
 					else if(keyboard_status.ctrl && scancode == TAB){
 						text_color(0);
 					}
+
 					//no shift no caps
 					else if(!keyboard_status.shift && !keyboard_status.capslock){
 						keycode = KBkeys[0][scancode];
