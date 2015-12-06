@@ -54,14 +54,14 @@ need a open, read, write, close function
 //http://www.computer-engineering.org/ps2keyboard/
 //#define KB_PORT 0x60 moved to header but left here for reference
 uint8_t kbbuf_index;
-uint8_t kb_buffer[MAXBUFLEN];
-uint8_t out_buffer[MAXBUFLEN];
+uint8_t kb_buffer[NUM_TERMINALS][MAXBUFLEN];
+uint8_t out_buffer[NUM_TERMINALS][MAXBUFLEN];
 uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
 //these will store screen positions when switching terminals - moved to header, externally visible
 //int terminal_screenx[3];
-//int terminal_screeny[3]; 
+//int terminal_screeny[3];
 
 //typedef enum {false, true} bool;
 
@@ -72,12 +72,12 @@ void clear_buffer(int clear_keyboard){
 	cli();
 	if(clear_keyboard){
 		for(i = 0; i < MAXBUFLEN; i++)
-			kb_buffer[i] = '\0';
+			kb_buffer[current_terminal][i] = '\0';
 		kbbuf_index = 0; //reset index pointer
 	}
 	else{
 		for(i = 0; i < MAXBUFLEN; i++){
-			out_buffer[i] = '\0';
+			out_buffer[current_terminal][i] = '\0';
 		}
 		kb_buf_read = 0; //reset flag
 	}
@@ -101,7 +101,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 	while(!kb_buf_read){}
 	cli();
 
-	memcpy(buf, out_buffer, length < MAXBUFLEN ? length:MAXBUFLEN); //this might need to be < index instead
+	memcpy(buf, &(out_buffer[current_terminal]), length < MAXBUFLEN ? length:MAXBUFLEN); //this might need to be < index instead
 
 	sti();
 	clear_buffer(0);
@@ -121,11 +121,11 @@ int32_t terminal_switch(int newterminalindex){
 	terminal_screenx[current_terminal] = screen_x;
 	terminal_screeny[current_terminal] = screen_y;
 	//get page address, first video page is at 132MB, each new page is 4kb later
-	uint8_t* temppage = get_terminal_back_page(current_terminal);
+	uint32_t* temppage = get_terminal_back_page(current_terminal);
 	//copy video memory into backing page
-	memcpy(temppage, (uint8_t *) VIDEO, FOURKB);
-	uint8_t* newpage = get_terminal_back_page(newterminalindex);
-	
+	memcpy(temppage, (uint32_t *) VIDEO, FOURKB);
+	uint32_t* newpage = get_terminal_back_page(newterminalindex);
+
 	//copy next terminals stuff to video memory
 	memcpy((uint8_t *) VIDEO, newpage, FOURKB);
 
@@ -195,7 +195,7 @@ void keyboard_init(void){
 
 	int j;
 	for(j = 0; j < MAXBUFLEN; j++){
-			kb_buffer[j] = '\0';
+			kb_buffer[current_terminal][j] = '\0';
 	}
 	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
@@ -250,13 +250,13 @@ void keyboard_handler(void){
 				break;
 			case ENTER:
 				cli();
-				kb_buffer[kbbuf_index] = '\n'; //not sure if we need/want this
+				kb_buffer[current_terminal][kbbuf_index] = '\n'; //not sure if we need/want this
 
 				putc('\n');
 				//copy keyboard buffer to out_buffer for reading
 				int i;
 				for(i = 0; i < kbbuf_index; i++){
-					out_buffer[i] = kb_buffer[i];
+					out_buffer[current_terminal][i] = kb_buffer[current_terminal][i];
 				}
 				sti();
 				//kbbuf_index = 0;
@@ -267,7 +267,7 @@ void keyboard_handler(void){
 			case BACKSPACE:
 				if(kbbuf_index > 0){
 					kbbuf_index--;
-					kb_buffer[kbbuf_index] = '\0';
+					kb_buffer[current_terminal][kbbuf_index] = '\0';
 
 					if(screen_x == 0 && screen_y > 0){
 						screen_x = 79;
@@ -330,6 +330,7 @@ void keyboard_handler(void){
 
 					//switch terminal case, F2 is 3C, F1 is 3B, alt f2 is 69? alt f1 is 68 - not sure if want these
 					else if(keyboard_status.alt && scancode == F1){
+						terminal_switch(0);
 						//save screen positions
 						//terminal_screenx[current_terminal] = screen_x;
 						//terminal_screeny[current_terminal] = screen_y;
@@ -347,10 +348,12 @@ void keyboard_handler(void){
 					}
 					//F2 case
 					else if(keyboard_status.alt && scancode == F2){
+						terminal_switch(1);
 						break;
 					}
 					//F3 case
 					else if(keyboard_status.alt && scancode == F3){
+						terminal_switch(2);
 						break;
 					}
 
@@ -380,7 +383,7 @@ void keyboard_handler(void){
 
 					//put into buffer
 					if(kbbuf_index < MAXBUFLEN && keycode){
-						kb_buffer[kbbuf_index] = keycode;
+						kb_buffer[current_terminal][kbbuf_index] = keycode;
 						kbbuf_index++;
 						putc(keycode);
 						update_cursor(screen_x, screen_y);

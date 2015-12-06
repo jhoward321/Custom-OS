@@ -46,7 +46,7 @@ void rtc_init(void){
 //return 0 after an interrupt has occurred
 int32_t rtc_read(int32_t fd, uint8_t* buf, int32_t length){
 	interrupt_flag = 1;
-  sti();
+  	sti();
 	while(interrupt_flag); //wait for interrupt to occur and then return 0
 
 	return 0;
