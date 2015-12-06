@@ -29,12 +29,12 @@ operations_table_t stdout_operations = {NULL, terminal_write, NULL, NULL};
 
 void set_pcbs(){
 	int curr_addr = PCB_ADDR_BASE;
-	int x, y; 
+	int x, y;
 	for(y=0; y<MAX_TERMINALS; y++){
 		for(x=0; x<MAX_PCBS; x++){
 			PCB_ADDR[y][x] = (curr_addr -= EIGHT_KB);
 		}
-	}	
+	}
 }
 
 void set_exeptions(){
@@ -367,9 +367,9 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		return -1;
 	uint32_t pde;
 	if(curr_task[current_terminal]==NULL)
-		pde = calc_pde_val(0);
+		pde = calc_pde_val(6*current_terminal);
 	else
-		pde = calc_pde_val(get_next_pid());	//will need to change later
+		pde = calc_pde_val(6*current_terminal + get_next_pid());	//will need to change later
 	add_page(pde, VIRT_ADDR128_INDEX);
 
 	//set cr3 register
@@ -649,6 +649,6 @@ int32_t new_pcb(int8_t* arguments){
 	curr_task[current_terminal] = retval;
 	//esp and ebp not set.
 
-	return next_pid;
+	return  next_pid;
 
 }

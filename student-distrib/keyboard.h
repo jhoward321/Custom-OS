@@ -44,9 +44,10 @@ extern uint8_t kb_index;
 extern uint8_t kb_in_buffer[MAXBUFLEN]; //this will probably need to be modified for checkpoint 2 which specifies the 128 length buffer
 uint8_t kb_out_buffer[MAXBUFLEN];
 
-extern int terminal_screenx[NUM_TERMINALS];
-extern int terminal_screeny[NUM_TERMINALS];
-extern int current_terminal;
+int terminal_screenx[NUM_TERMINALS];
+int terminal_screeny[NUM_TERMINALS];
+int current_terminal;
+
 //extern int num_terminals;
 
 typedef struct kb_flags_t{
