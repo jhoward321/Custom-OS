@@ -4,12 +4,12 @@
 
 
 #define EIGHT_KB 0x2000
-#define PCB_ADDR0 (0x00800000 - EIGHT_KB) 		//PCB address for the first task -> bottom of the task 1's kernel stack
-#define PCB_ADDR1 (PCB_ADDR0 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR2 (PCB_ADDR1 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR3 (PCB_ADDR2 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR4 (PCB_ADDR3 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-#define PCB_ADDR5 (PCB_ADDR4 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+#define PCB_ADDR_BASE 0x00800000 		//PCB address for the first task -> bottom of the task 1's kernel stack
+// #define PCB_ADDR1 (PCB_ADDR0 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+// #define PCB_ADDR2 (PCB_ADDR1 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+// #define PCB_ADDR3 (PCB_ADDR2 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+// #define PCB_ADDR4 (PCB_ADDR3 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
+// #define PCB_ADDR5 (PCB_ADDR4 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
 #define KEYBOARD_IDT 33 			//Keyboard IDT value
 #define RTC_IDT 40 					//RTC IDT value
 #define SYSTEM_CALL_IDT 128 		//System Call IDT value
@@ -45,6 +45,7 @@
 #define _128MB 0x08000000
 #define _132MB 0x08400000
 #define VIRT_VID_INDEX 33 //index in page directory for 132MB
+#define MAX_TERMINALS 3
 
 
 
@@ -82,7 +83,10 @@ typedef struct pcb_t {
 	uint8_t arg[CHAR_BUFF_SIZE];
 } pcb_t;
 
-extern pcb_t* curr_task;
+extern pcb_t* curr_task[MAX_TERMINALS];
+extern int current_terminal;
+
+void set_pcbs();
 
 void set_interrupt_gate(uint8_t i);
 
