@@ -260,10 +260,12 @@ void keyboard_handler(void){
 						//clear_buffer(1);
 						scroll_to_top();	//moves current line and lower up to the top of the terminal
 						update_cursor(screen_x, screen_y);
+						update_attrib();
 						break;
 					}
 					//ctrl+C terminates a program
 					else if(keyboard_status.ctrl && scancode == C){
+							clear_buffer(1);
 							send_eoi(KEYBOARD_IRQ);	//have to send keyboard eoi since we won't return
 							int8_t ret = 1;	//return value to shell set this to whatever we want
 							asm volatile("	movl $1, %%eax \n\

@@ -199,7 +199,7 @@ putc(uint8_t c)
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
         if(screen_y + (screen_x / NUM_COLS) == NUM_ROWS)
-                scroll_screen();
+            scroll_screen();
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
         screen_x %= NUM_COLS;
     }
@@ -244,12 +244,13 @@ void text_color(uint8_t shift){
     else
       ATTRIB &= 0xF0;
   }
+  update_attrib();
+}
 
-
+void update_attrib(){
   int32_t i;
   for(i=0; i<NUM_ROWS*NUM_COLS; i++)
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
-
 }
 /*
 * int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
