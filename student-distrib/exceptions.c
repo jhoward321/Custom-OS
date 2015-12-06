@@ -94,6 +94,8 @@ void set_interrupt_gate(uint8_t i){
 
 void ex_error(){
 	disable_irq(1);			//disable keyboard Interrupts
+	screen_x = 0;
+	screen_y = 0;
 	clear();			//clear the screen
 	printf("Error #");		//let user know there is an error
 

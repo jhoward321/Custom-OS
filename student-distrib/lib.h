@@ -17,6 +17,7 @@ int32_t puts(int8_t *s);
 void scroll_screen();
 void scroll_to_top();
 void text_color(uint8_t shift);
+void update_attrib();
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
