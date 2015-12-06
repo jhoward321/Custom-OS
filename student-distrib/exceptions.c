@@ -6,18 +6,13 @@
 #include "lib.h"
 #include "fs.h"
 
+int current_terminal = 0; 				///==========!!!!!!!! TO BE CHANGED !!!!!!!=========
+pcb_t* curr_task[MAX_TERMINALS];
 
-pcb_t* curr_task;
+static uint32_t pid_used[MAX_TERMINALS][MAX_PCBS] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
+static uint32_t PCB_ADDR[MAX_TERMINALS][MAX_PCBS];
 
-static uint32_t pid_used[MAX_PCBS] = {0,0,0,0,0,0};
-static uint32_t PCB_ADDR[MAX_PCBS] = {
-						PCB_ADDR0,
-						PCB_ADDR1,
-						PCB_ADDR2,
-						PCB_ADDR3,
-						PCB_ADDR4,
-						PCB_ADDR5
-};
+
 
 // int32_t (*file_operations[])(int32_t fd, uint8_t* buf, int32_t length) = {read_file, write_file, open_file, close_file};
 // int32_t (*dir_operations[])(int32_t fd, uint8_t* buf, int32_t length)  = {read_dir, write_dir, open_dir, close_dir};
@@ -32,6 +27,15 @@ operations_table_t stdin_operations = {terminal_read, NULL, terminal_open, termi
 operations_table_t stdout_operations = {NULL, terminal_write, NULL, NULL};
 
 
+void set_pcbs(){
+	int curr_addr = PCB_ADDR_BASE;
+	int x, y; 
+	for(y=0; y<MAX_TERMINALS; y++){
+		for(x=0; x<MAX_PCBS; x++){
+			PCB_ADDR[y][x] = (curr_addr -= EIGHT_KB);
+		}
+	}	
+}
 
 void set_exeptions(){
 	//20 interrupts defined by intel
@@ -250,32 +254,32 @@ void rtc_handler(){	//RTC
 //should never return to the caller
 int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 
-	pid_used[curr_task->process_id] = FREE; //pid no longer used
+	pid_used[current_terminal][curr_task[current_terminal]->process_id] = FREE; //pid no longer used
 
 	//if process being killed is pid0, start shell again
 	//halt terminates a process, returning the specified value to its parent process
-	if(curr_task->parent_task == NULL){
-		curr_task = NULL;
+	if(curr_task[current_terminal]->parent_task == NULL){
+		curr_task[current_terminal] = NULL;
 		sys_execute((uint8_t*)"shell", 0,0);
 	}
 
 
-	//store parents ebp/esp values before changing curr_task
-	//uint32_t parentebp = curr_task->ebp;
-	//uint32_t parentesp = curr_task->esp;
-	//uint32_t parenteip = curr_task->eip;
-	curr_task = curr_task->parent_task;
-	pcb_t* oldtask = curr_task->child_task;
-	curr_task->child_task = NULL;
-	//curr_task->child_task = NULL;
+	//store parents ebp/esp values before changing curr_task[current_terminal]
+	//uint32_t parentebp = curr_task[current_terminal]->ebp;
+	//uint32_t parentesp = curr_task[current_terminal]->esp;
+	//uint32_t parenteip = curr_task[current_terminal]->eip;
+	curr_task[current_terminal] = curr_task[current_terminal]->parent_task;
+	pcb_t* oldtask = curr_task[current_terminal]->child_task;
+	curr_task[current_terminal]->child_task = NULL;
+	//curr_task[current_terminal]->child_task = NULL;
 
 	//restore parents paging
-	uint32_t pde = calc_pde_val(curr_task->process_id);
+	uint32_t pde = calc_pde_val(curr_task[current_terminal]->process_id);
 	add_page(pde, VIRT_ADDR128_INDEX);
 	//set cr3 register - flush TLB
 	reset_cr3();
 
-	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB);
+	tss.esp0 = EIGHT_MB - (curr_task[current_terminal]->process_id * EIGHT_KB);
 	//jmp halt_ret_label
 	uint32_t ret = status;
 	//restore old ebp/esp values
@@ -362,7 +366,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	if(get_next_pid() == -1)
 		return -1;
 	uint32_t pde;
-	if(curr_task==NULL)
+	if(curr_task[current_terminal]==NULL)
 		pde = calc_pde_val(0);
 	else
 		pde = calc_pde_val(get_next_pid());	//will need to change later
@@ -382,22 +386,22 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 	//context switch
 
 	//need to get execution point - stored li
-	curr_task->eip = (progbuf[MAGIC_NUM_INDEX3] << 24) + (progbuf[MAGIC_NUM_INDEX2] << 16) + (progbuf[MAGIC_NUM_INDEX1] << 8) + (progbuf[MAGIC_NUM_INDEX0]);
-	//curr_task->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task->eip, 4);
+	curr_task[current_terminal]->eip = (progbuf[MAGIC_NUM_INDEX3] << 24) + (progbuf[MAGIC_NUM_INDEX2] << 16) + (progbuf[MAGIC_NUM_INDEX1] << 8) + (progbuf[MAGIC_NUM_INDEX0]);
+	//curr_task[current_terminal]->eip = read_data(fileinfo.inode_number, 0, (uint8_t*)&curr_task[current_terminal]->eip, 4);
 
 	//need to save old ebp/esp into pcb
 	asm volatile(
 		"movl %%esp, %0"
-		:"=r"(curr_task->esp)
+		:"=r"(curr_task[current_terminal]->esp)
 	);
 	asm volatile(
 		"movl %%ebp, %0"
-		:"=r"(curr_task->ebp)
+		:"=r"(curr_task[current_terminal]->ebp)
 	);
 
 	//set tss stuff
 	tss.ss0 = KERNEL_DS;
-	tss.esp0 = EIGHT_MB - (curr_task->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
+	tss.esp0 = EIGHT_MB - (curr_task[current_terminal]->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
 
 	uint32_t user_stack = USER_STACK_ADDR;
 	//push IRET context onto stack, not positive my eip/esp values are correct
@@ -413,7 +417,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		iret \n\
 		"
 		:
-		: "r" (USER_DS), "r" (user_stack), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task->eip)
+		: "r" (USER_DS), "r" (user_stack), "r" (IF_FLAG), "r" (USER_CS), "r" (curr_task[current_terminal]->eip)
 		: "eax", "memory", "cc"
 	);
 
@@ -438,22 +442,22 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes){
 	}
 
 	// fd has to be in range AND fd cannot be 1 (stdout)
-	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes <= 0 || curr_task->file_array[fd].flags == 0)
+	if(fd < STDIN || fd >= PCB_END  || fd == STDOUT || nbytes <= 0 || curr_task[current_terminal]->file_array[fd].flags == 0)
 		return -1;
-	if(curr_task->file_array[fd].opt->read == NULL)
+	if(curr_task[current_terminal]->file_array[fd].opt->read == NULL)
 		return -1;
 
-	return curr_task->file_array[fd].opt->read(fd, buf, nbytes);
+	return curr_task[current_terminal]->file_array[fd].opt->read(fd, buf, nbytes);
 }
 
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes){
 
-	if(fd <= STDIN || fd >= PCB_END || curr_task->file_array[fd].flags == 0)
+	if(fd <= STDIN || fd >= PCB_END || curr_task[current_terminal]->file_array[fd].flags == 0)
 		return -1;
-	if(curr_task->file_array[fd].opt->write == NULL)
+	if(curr_task[current_terminal]->file_array[fd].opt->write == NULL)
 		return -1;
 
-	return curr_task->file_array[fd].opt->write(fd, (uint8_t*)buf, nbytes);
+	return curr_task[current_terminal]->file_array[fd].opt->write(fd, (uint8_t*)buf, nbytes);
 
 }
 
@@ -468,11 +472,11 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 	}
 
 	//commented out because causes a page fault if fd hasnt been assigned yet, gets assigned later
-	// if(curr_task->file_array[fd].opt->open == NULL)
+	// if(curr_task[current_terminal]->file_array[fd].opt->open == NULL)
 	// 	return -1;
 
 	for(fd = PCB_START; fd<PCB_END; fd++){ 		//go through the file array for the current pcb
-		if(curr_task->file_array[fd].flags == 0){
+		if(curr_task[current_terminal]->file_array[fd].flags == 0){
 			curr_available = fd;
 			break;
 		}
@@ -481,28 +485,28 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 		return -1;
 
 	//SET INODE NUMBER
-	curr_task->file_array[curr_available].inode_number = temp.inode_number;
-	curr_task->file_array[curr_available].flags = USED;
+	curr_task[current_terminal]->file_array[curr_available].inode_number = temp.inode_number;
+	curr_task[current_terminal]->file_array[curr_available].flags = USED;
 
 
 	switch(temp.file_type){
 		case 0:
-			curr_task->file_array[curr_available].opt =  &rtc_operations;
+			curr_task[current_terminal]->file_array[curr_available].opt =  &rtc_operations;
 			rtc_open(0, NULL, 0);
 			break;
 
 		case 1:
-			curr_task->file_array[curr_available].opt = &dir_operations;  //CHECK THIS <====================
+			curr_task[current_terminal]->file_array[curr_available].opt = &dir_operations;  //CHECK THIS <====================
 			open_dir(curr_available, NULL, 0);
 			break;
 
 		case 2:
-			curr_task->file_array[curr_available].opt = &file_operations;  //CHECK THIS <====================
+			curr_task[current_terminal]->file_array[curr_available].opt = &file_operations;  //CHECK THIS <====================
 			open_file(curr_available, NULL, 0);
 			break;
 
 		default:
-			curr_task->file_array[curr_available].opt = &stdin_operations;
+			curr_task[current_terminal]->file_array[curr_available].opt = &stdin_operations;
 			terminal_open(0, NULL, 0);
 			break;
 
@@ -517,14 +521,14 @@ int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 		return -1;
 	}
 
-	if(curr_task->file_array[fd].flags == FREE) {
+	if(curr_task[current_terminal]->file_array[fd].flags == FREE) {
 		return -1;
 	}
 
-	curr_task->file_array[fd].opt = NULL;
-	curr_task->file_array[fd].inode_number = INVALID_INODE;
-	curr_task->file_array[fd].file_position = NULL;
-	curr_task->file_array[fd].flags = FREE;
+	curr_task[current_terminal]->file_array[fd].opt = NULL;
+	curr_task[current_terminal]->file_array[fd].inode_number = INVALID_INODE;
+	curr_task[current_terminal]->file_array[fd].file_position = NULL;
+	curr_task[current_terminal]->file_array[fd].flags = FREE;
 
 	return 0;
 }
@@ -538,7 +542,7 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 	for(i=0; i<nbytes; i++){
 		buf[i] = '\0';
 	}
-	uint8_t* arguments = curr_task->arg;
+	uint8_t* arguments = curr_task[current_terminal]->arg;
 	if(arguments[0] == '\0')
 		return -1;
 
@@ -583,7 +587,7 @@ int32_t sys_sigreturn(int32_t garbage1, int32_t garbage2, int32_t garbage3){
 int32_t get_next_pid(){
 	int i;
 	for(i=0; i<MAX_PCBS; i++){
-		if(pid_used[i] == FREE)
+		if(pid_used[current_terminal][i] == FREE)
 			return i;
 	}
 	return -1;
@@ -597,9 +601,9 @@ int32_t new_pcb(int8_t* arguments){
 	if(next_pid == INVALID_INODE)
 		return -1;
 
-	pid_used[next_pid] = USED; 		//set pid to being used
+	pid_used[current_terminal][next_pid] = USED; 		//set pid to being used
 
-	pcb_t* retval = (pcb_t*) PCB_ADDR[next_pid];
+	pcb_t* retval = (pcb_t*) PCB_ADDR[current_terminal][next_pid];
 
 	for(i=PCB_START; i<PCB_END; i++){
 		retval->file_array[i].opt = NULL;
@@ -620,14 +624,14 @@ int32_t new_pcb(int8_t* arguments){
 	retval->file_array[STDOUT].file_position = 0;
 	retval->file_array[STDOUT].flags = USED;
 
-	if(curr_task == NULL){ 			// !!!!!!============SET CURR_TASK TO NULL IN KERNEL.C
+	if(curr_task[current_terminal] == NULL){ 			// !!!!!!============SET curr_task[current_terminal] TO NULL IN KERNEL.C
 		retval->parent_task = NULL;
 		retval->child_task = NULL;
 		retval->process_id = next_pid;
 	}
 	else{
-		curr_task->child_task = retval;
-		retval->parent_task = curr_task;
+		curr_task[current_terminal]->child_task = retval;
+		retval->parent_task = curr_task[current_terminal];
 		retval->child_task = NULL;
 		retval->process_id = next_pid;
 	}
@@ -641,7 +645,7 @@ int32_t new_pcb(int8_t* arguments){
 		retval->arg[i] = arguments[i];
 	}
 
-	curr_task = retval;
+	curr_task[current_terminal] = retval;
 	//esp and ebp not set.
 
 	return next_pid;
