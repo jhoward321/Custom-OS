@@ -29,7 +29,7 @@
 #define TERM_1 0xB9
 #define TERM_2 0xBA
 #define TERM_3 0xBB
-
+#define _132MB 0x8400000
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
@@ -64,7 +64,7 @@ void paging_init(){
 	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
 	//directory 1 is kernel
 	page_directory[1] = KERNEL_VIRTADR | (PAGE_DIREC_SIZE_MASK | PRESENT); //map kernel as present
-
+	add_vidpage();
 
 	//the assembly below loads the page directory
 	//the first instruction loads the page directory into cr3
@@ -108,7 +108,7 @@ void add_vidpage(){
 
 //terminal_index can be 0, 1, or 2, return pointer to backing page
 uint32_t* get_terminal_back_page(int terminal_index){
-	return (uint32_t*) (TERM_1 + (terminal_index + 1 )* ALIGN_SIZE);
+	return (uint32_t*) (_132MB + (TERM_1 + terminal_index )* ALIGN_SIZE);
 }
 
 uint32_t calc_pde_val(uint32_t processid){

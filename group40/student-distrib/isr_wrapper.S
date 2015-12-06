@@ -26,7 +26,7 @@ ex_128:
 #        cld
 
 
-	pushal
+  pushal
   pushl %edx
   pushl %ecx
   pushl %ebx
