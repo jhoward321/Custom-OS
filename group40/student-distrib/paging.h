@@ -13,6 +13,7 @@ uint32_t calc_pde_val(uint32_t processid);
 void add_vidpage();
 void add_page(uint32_t pde, uint32_t pd_index);
 void reset_cr3();
+uint8_t* get_terminal_back_page(int terminal_index);
 
 
 #endif

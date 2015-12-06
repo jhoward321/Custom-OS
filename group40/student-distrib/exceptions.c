@@ -6,7 +6,7 @@
 #include "lib.h"
 #include "fs.h"
 
-int current_terminal = 0; 				///==========!!!!!!!! TO BE CHANGED !!!!!!!=========
+//int current_terminal = 0; 				///==========!!!!!!!! TO BE CHANGED !!!!!!!=========
 pcb_t* curr_task[MAX_TERMINALS];
 
 static uint32_t pid_used[MAX_TERMINALS][MAX_PCBS] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
@@ -563,6 +563,7 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes, int32_t garbage3){
 
 }
 
+//i think this needs modifications for terminal switching
 int32_t sys_vidmap(uint8_t** screen_start, int32_t garbage2, int32_t garbage3){
 
 	//check to make sure screen_start is a valid address, should it be > or >=?

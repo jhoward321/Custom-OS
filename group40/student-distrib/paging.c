@@ -1,4 +1,5 @@
 #include "paging.h"
+#include "keyboard.h"
 
 //references: 	http://wiki.osdev.org/Setting_Up_Paging
 //		http://wiki.osdev.org/Paging
@@ -25,6 +26,9 @@
 #define USERBIT 0x4
 #define VIRT_VID_INDEX 33				//maps to 132MB
 #define USERREADPRESENT 7
+#define TERM_1 0xB9
+#define TERM_2 0xBA
+#define TERM_3 0xBB
 
 
 uint32_t page_directory[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
@@ -49,8 +53,13 @@ void paging_init(){
 	}
 
 
-	first_page_table[VID_MEM_LOC] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
-	video_page_table[0] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
+	//first_page_table[VID_MEM_LOC] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
+	first_page_table[VID_MEM_LOC] = VID_MEM_LOC | USERREADPRESENT;
+	//video_page_table[0] = (VID_MEM_LOC * ALIGN_SIZE) | USERREADPRESENT; //map memory 0mb to 4mb to the table
+	video_page_table[VID_MEM_LOC] = VID_MEM_LOC | USERREADPRESENT;
+	video_page_table[TERM_1] =  TERM_1 | USERREADPRESENT;
+	video_page_table[TERM_2] = TERM_2 | USERREADPRESENT;
+	video_page_table[TERM_3] = TERM_3 | USERREADPRESENT;
 
 	page_directory[0] = ((uint32_t)first_page_table) | PRESENT;
 	//directory 1 is kernel
@@ -96,6 +105,11 @@ void add_vidpage(){
 	page_directory[VIRT_VID_INDEX] = (uint32_t) &video_page_table;
 	page_directory[VIRT_VID_INDEX] |= USERREADPRESENT; //just in case
 	reset_cr3();
+}
+
+//terminal_index can be 0, 1, or 2, return pointer to backing page
+uint8_t* get_terminal_back_page(int terminal_index){
+	return (uint8_t*) (TERM_1 + terminal_index * ALIGN_SIZE);
 }
 
 uint32_t calc_pde_val(uint32_t processid){
