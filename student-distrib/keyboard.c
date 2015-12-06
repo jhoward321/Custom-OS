@@ -263,7 +263,7 @@ void keyboard_handler(void){
 						break;
 					}
 					//ctrl+C terminates a program
-					if(keyboard_status.ctrl && scancode == C){
+					else if(keyboard_status.ctrl && scancode == C){
 							send_eoi(KEYBOARD_IRQ);	//have to send keyboard eoi since we won't return
 							int8_t ret = 1;	//return value to shell set this to whatever we want
 							asm volatile("	movl $1, %%eax \n\
@@ -273,6 +273,13 @@ void keyboard_handler(void){
 									:"g"(ret)
 									:"memory", "eax"
 									);
+					}
+
+					else if(keyboard_status.ctrl && keyboard_status.shift && scancode == TAB){
+						text_color(1);
+					}
+					else if(keyboard_status.ctrl && scancode == TAB){
+						text_color(0);
 					}
 					//no shift no caps
 					else if(!keyboard_status.shift && !keyboard_status.capslock){
