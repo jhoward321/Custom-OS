@@ -15,7 +15,12 @@ uint8_t slave_mask; /* IRQs 8-15 */
 #define INIT_MASK 0xFF 				//bitmask to mask all IRQ lines
 #define PIC_PORT_LIM 8 				//number of IRQs for each PIC
 
-/* Initialize the 8259 PIC */
+/*
+* void i8259_init(void)
+*   Inputs: none
+*   Return Value: none
+*	Function: Initialize the 8259 PIC
+*/
 void
 i8259_init(void)
 {
@@ -40,7 +45,12 @@ i8259_init(void)
 
 }
 
-/* Enable (unmask) the specified IRQ */
+/*
+* void enable_irq(uint32_t irq_num)
+*   Inputs: none
+*   Return Value: none
+*	Function: Enable (unmask) the specified IRQ
+*/
 void
 enable_irq(uint32_t irq_num)
 {
@@ -61,7 +71,12 @@ enable_irq(uint32_t irq_num)
 
 }
 
-/* Disable (mask) the specified IRQ */
+/*
+* void disable_irq(uint32_t irq_num)
+*   Inputs: none
+*   Return Value: none
+*	Function: Disable (mask) the specified IRQ
+*/
 void
 disable_irq(uint32_t irq_num)
 {
@@ -78,7 +93,13 @@ disable_irq(uint32_t irq_num)
 	outb(value, port);
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+
+/*
+* void send_eoi(uint32_t irq_num)
+*   Inputs: none
+*   Return Value: none
+*	Function: Send end-of-interrupt signal for the specified IRQ
+*/
 void
 send_eoi(uint32_t irq_num)
 {
