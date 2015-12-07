@@ -206,7 +206,10 @@ putc(uint8_t c)
 }
 
 /*
- * when called the video memory is shifted up by one character line
+ * void scroll_screen()
+ * 	inputs: none
+ * 	return: none
+ * 	function: when called the video memory is shifted up by one character line
  */
 void scroll_screen(){
         memmove(video_mem, video_mem + ((NUM_COLS) << 1), (NUM_COLS * (NUM_ROWS-1))<<1);
@@ -219,7 +222,10 @@ void scroll_screen(){
 
 
 /*
- *  scrolls the screen to the top, then erases below the
+ * void scroll_screen()
+ * 	inputs: none
+ * 	return: none
+ * 	function: scrolls the video memory to the top
  */
 void scroll_to_top(){
   if(screen_y != 0){
@@ -233,6 +239,12 @@ void scroll_to_top(){
   }
 }
 
+/*
+ * void text_color(uint8_t shift)
+ * 	inputs: shift- if shift is pressed
+ * 	return: none
+ * 	function: changes the color of the foreground or background based shift
+ */
 void text_color(uint8_t shift){
   if(shift){
       ATTRIB += 0x10;
@@ -247,6 +259,13 @@ void text_color(uint8_t shift){
   update_attrib();
 }
 
+/*
+ * void text_color(uint8_t shift)
+ * 	inputs: shift- if shift is pressed
+ * 	return: none
+ * 	function: helper function called by text_color and from keyboard.c to update
+ *		the attribute thoughout the screen
+ */
 void update_attrib(){
   int32_t i;
   for(i=0; i<NUM_ROWS*NUM_COLS; i++)
