@@ -274,12 +274,12 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 	//curr_task[current_terminal]->child_task = NULL;
 
 	//restore parents paging
-	uint32_t pde = calc_pde_val(curr_task[current_terminal]->process_id);
+	uint32_t pde = calc_pde_val(8*current_terminal + curr_task[current_terminal]->process_id);
 	add_page(pde, VIRT_ADDR128_INDEX);
 	//set cr3 register - flush TLB
 	reset_cr3();
 
-	tss.esp0 = EIGHT_MB - (curr_task[current_terminal]->process_id * EIGHT_KB);
+	tss.esp0 = EIGHT_MB - ( (8*current_terminal + curr_task[current_terminal]->process_id) * EIGHT_KB);
 	//jmp halt_ret_label
 	uint32_t ret = status;
 	//restore old ebp/esp values
@@ -293,6 +293,7 @@ int32_t sys_halt(uint8_t status, int32_t garbage2, int32_t garbage3){
 		:"r"(ret), "r"(oldtask->esp), "r"(oldtask->ebp)
 		:"cc"
 	);
+
 
 	return -1; //should never get here
 }
@@ -367,9 +368,9 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 		return -1;
 	uint32_t pde;
 	if(curr_task[current_terminal]==NULL)
-		pde = calc_pde_val(6*current_terminal);
+		pde = calc_pde_val(8*current_terminal);
 	else
-		pde = calc_pde_val(6*current_terminal + get_next_pid());	//will need to change later
+		pde = calc_pde_val(8*current_terminal + get_next_pid());	//will need to change later
 	add_page(pde, VIRT_ADDR128_INDEX);
 
 	//set cr3 register
@@ -401,7 +402,7 @@ int32_t sys_execute(const uint8_t* command, int32_t garbage2, int32_t garbage3){
 
 	//set tss stuff
 	tss.ss0 = KERNEL_DS;
-	tss.esp0 = EIGHT_MB - (curr_task[current_terminal]->process_id * EIGHT_KB); //see kernel.c, x86_desc for tss info
+	tss.esp0 = EIGHT_MB - ((8*current_terminal + curr_task[current_terminal]->process_id) * EIGHT_KB); //see kernel.c, x86_desc for tss info
 
 	uint32_t user_stack = USER_STACK_ADDR;
 	//push IRET context onto stack, not positive my eip/esp values are correct
@@ -517,7 +518,7 @@ int32_t sys_open(const uint8_t* filename, int32_t garbage2, int32_t garbage3){
 
 int32_t sys_close(int32_t fd, int32_t garbage2, int32_t garbage3){
 
-	if (fd <= STDIN || fd ==  STDOUT) {
+	if (fd <= STDIN || fd ==  STDOUT || fd > 7) {
 		return -1;
 	}
 
