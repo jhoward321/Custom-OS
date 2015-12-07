@@ -112,6 +112,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 
 	return length < MAXBUFLEN ? length:MAXBUFLEN;
 }
+
 //switch to new terminal specified, return 1 on success, 0 on failure
 int32_t terminal_switch(int newterminalindex){
 	cli();
@@ -125,8 +126,9 @@ int32_t terminal_switch(int newterminalindex){
 
 	//save task info
 	//need to save esp0 into somewhere - still need to find out where
-	curr_task[current_terminal]->registers.esp0 = tss.esp0;
 	//save registers for old task
+	curr_task[current_terminal]->registers.esp0 = tss.esp0;
+
 	asm volatile(
 		"pushl %%eax \n\
 		pushl %%ebx \n\
@@ -134,18 +136,30 @@ int32_t terminal_switch(int newterminalindex){
 		pushl %%edx \n\
 		pushl %%esi \n\
 		pushl %%edi \n\
-		pushfl \n\
-		movl %%cr3, %%eax \n\
-		movl %%eax, %0 \n\
+		pushl %%ecx \n\
+		movl %%cr3, %%ecx \n\
+		movl %%ecx, %0 \n\
+		popl %%ecx \n\
 		movl %%ebp, %1 \n\
 		movl %%esp, %2 \n\
-		leal GETEIP, %%eax \n\
-		movl %%eax, %3 \n\
-		"
-		: "=g"(curr_task[current_terminal]->registers.cr3), "=g"(curr_task[current_terminal]->registers.ebp), "=g"(curr_task[current_terminal]->registers.esp), "=g"(curr_task[current_terminal]->registers.eip)
-		:
-		: "eax"
+	"
+		:"=g"(curr_task[current_terminal]->registers.cr3), "=g"(curr_task[current_terminal]->registers.ebp), "=g"(curr_task[current_terminal]->registers.esp)
+		
 	);
+
+	asm volatile (
+		"leal GETEIP, %%ecx \n\
+		"
+		: : :"ecx");
+
+	asm volatile(
+		"movl %%ecx, %0 \n\
+		": "=g"(curr_task[current_terminal]->registers.eip)
+	);
+
+
+
+
 	//output, input, clobbered registers
 
 	//get page address, first video page is at 132MB, each new page is 4kb later
@@ -158,8 +172,8 @@ int32_t terminal_switch(int newterminalindex){
 
 	//check if task is running, else start new shell
 	if(!pid_used[current_terminal][0]){
-		sti();
 		clear();
+		// sti(); 								<<<<<<<<<<<<+===================================== CHECK IF THIS IS NEEDED !!!!!!!!!!!!!!!!!!!!!!!!!!! ========================
 		send_eoi(KEYBOARD_IRQ);
 		screen_x = 0;
 		screen_y = 0;
@@ -176,28 +190,35 @@ int32_t terminal_switch(int newterminalindex){
 	//restore stack
 	tss.esp0 = curr_task[current_terminal]->registers.esp0;
 	asm volatile(
-		"movl %0, %%cr3 \n\
+		"movl %0, %%cr3\n\
 		movl %1, %%ebp \n\
 		movl %2, %%esp \n\
-		popfl \n\
 		popl %%edi \n\
 		popl %%esi \n\
 		popl %%edx \n\
 		popl %%ecx \n\
 		popl %%ebx \n\
 		popl %%eax \n\
-		pushl %3 \n\
 		"
 		:
-		: "r"(curr_task[current_terminal]->registers.cr3), "r"(curr_task[current_terminal]->registers.ebp), "r"(curr_task[current_terminal]->registers.esp), "g"(curr_task[current_terminal]->registers.eip)
+		: "r"(curr_task[current_terminal]->registers.cr3), "r"(curr_task[current_terminal]->registers.ebp), "r"(curr_task[current_terminal]->registers.esp)
 	);
+
+	asm volatile(
+		"pushl %0 \n\
+		"
+		:
+		:"g"(curr_task[current_terminal]->registers.eip)
+	);
+
 	sti();
 	//these 2 things let us get eip stuff
-	asm volatile("leave \n\
-								ret");
+	asm volatile("ret");
 	asm volatile("GETEIP:");
-	return 1;
+	return 0;
 }
+
+
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 
