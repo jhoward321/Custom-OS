@@ -73,7 +73,7 @@ typedef struct file_descriptor_t{
 } file_descriptor_t;
 
 typedef struct task_stack_t{
-	uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags, cr3, esp0;
+	uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags, cr3, esp0, ss0;
 } task_stack_t;
 
 typedef struct pcb_t {

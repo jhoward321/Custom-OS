@@ -54,10 +54,10 @@ need a open, read, write, close function
 */
 //http://www.computer-engineering.org/ps2keyboard/
 //#define KB_PORT 0x60 moved to header but left here for reference
-uint8_t kbbuf_index;
+uint8_t kbbuf_index[NUM_TERMINALS];
 uint8_t kb_buffer[NUM_TERMINALS][MAXBUFLEN];
 uint8_t out_buffer[NUM_TERMINALS][MAXBUFLEN];
-uint8_t kb_buf_read; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
+uint8_t kb_buf_read[NUM_TERMINALS]; //flag for whether or not buffer is ready for reading. 1 is ready, 0 is not
 kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
 //these will store screen positions when switching terminals - moved to header, externally visible
@@ -74,13 +74,13 @@ void clear_buffer(int clear_keyboard){
 	if(clear_keyboard){
 		for(i = 0; i < MAXBUFLEN; i++)
 			kb_buffer[current_terminal][i] = '\0';
-		kbbuf_index = 0; //reset index pointer
+		kbbuf_index[current_terminal] = 0; //reset index pointer
 	}
 	else{
 		for(i = 0; i < MAXBUFLEN; i++){
 			out_buffer[current_terminal][i] = '\0';
 		}
-		kb_buf_read = 0; //reset flag
+		kb_buf_read[current_terminal] = 0; //reset flag
 	}
 	sti();
 }
@@ -99,7 +99,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 		return -1;
 	//wait until ready to read
 	sti();
-	while(!kb_buf_read){}
+	while(!kb_buf_read[current_terminal]){}
 	cli();
 
 	memcpy(buf, &(out_buffer[current_terminal]), length < MAXBUFLEN ? length:MAXBUFLEN); //this might need to be < index instead
@@ -108,7 +108,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 	clear_buffer(0);
 	//after reading need to reset buffer index and ready to read
 	//kbbuf_index = 0;
-	kb_buf_read = 0;
+	kb_buf_read[current_terminal] = 0;
 
 	return length < MAXBUFLEN ? length:MAXBUFLEN;
 }
@@ -144,7 +144,7 @@ int32_t terminal_switch(int newterminalindex){
 		movl %%esp, %2 \n\
 	"
 		:"=g"(curr_task[current_terminal]->registers.cr3), "=g"(curr_task[current_terminal]->registers.ebp), "=g"(curr_task[current_terminal]->registers.esp)
-		
+
 	);
 
 	asm volatile (
@@ -264,8 +264,8 @@ void keyboard_init(void){
 	keyboard_status.shift = 0;
 	keyboard_status.alt = 0;
 	keyboard_status.capslock = 0;
-	kb_buf_read = 0;
-	kbbuf_index = 0;
+	kb_buf_read[current_terminal] = 0;
+	kbbuf_index[current_terminal] = 0;
 
 	//initial terminal index
 	current_terminal = 0;
@@ -327,24 +327,24 @@ void keyboard_handler(void){
 				break;
 			case ENTER:
 				cli();
-				kb_buffer[current_terminal][kbbuf_index] = '\n'; //not sure if we need/want this
+				kb_buffer[current_terminal][kbbuf_index[current_terminal]] = '\n'; //not sure if we need/want this
 
 				putc('\n');
 				//copy keyboard buffer to out_buffer for reading
 				int i;
-				for(i = 0; i < kbbuf_index; i++){
+				for(i = 0; i < kbbuf_index[current_terminal]; i++){
 					out_buffer[current_terminal][i] = kb_buffer[current_terminal][i];
 				}
 				sti();
 				//kbbuf_index = 0;
 				clear_buffer(1);
-				kb_buf_read = 1;
+				kb_buf_read[current_terminal] = 1;
 				update_cursor(screen_x, screen_y);
 				break;
 			case BACKSPACE:
-				if(kbbuf_index > 0){
-					kbbuf_index--;
-					kb_buffer[current_terminal][kbbuf_index] = '\0';
+				if(kbbuf_index[current_terminal] > 0){
+					kbbuf_index[current_terminal]--;
+					kb_buffer[current_terminal][kbbuf_index[current_terminal]] = '\0';
 
 					if(screen_x == 0 && screen_y > 0){
 						screen_x = 79;
@@ -459,9 +459,9 @@ void keyboard_handler(void){
 					}
 
 					//put into buffer
-					if(kbbuf_index < MAXBUFLEN && keycode){
-						kb_buffer[current_terminal][kbbuf_index] = keycode;
-						kbbuf_index++;
+					if(kbbuf_index[current_terminal] < MAXBUFLEN && keycode){
+						kb_buffer[current_terminal][kbbuf_index[current_terminal]] = keycode;
+						kbbuf_index[current_terminal]++;
 						putc(keycode);
 						update_cursor(screen_x, screen_y);
 					}
