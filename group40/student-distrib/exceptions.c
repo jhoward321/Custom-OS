@@ -9,7 +9,7 @@
 //int current_terminal = 0; 				///==========!!!!!!!! TO BE CHANGED !!!!!!!=========
 pcb_t* curr_task[MAX_TERMINALS];
 
-static uint32_t pid_used[MAX_TERMINALS][MAX_PCBS] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
+uint32_t pid_used[MAX_TERMINALS][MAX_PCBS] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
 static uint32_t PCB_ADDR[MAX_TERMINALS][MAX_PCBS];
 
 

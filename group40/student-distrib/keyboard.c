@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "paging.h"
+#include "exceptions.h"
 
 //https://www.kernel.org/pub/linux/kernel/people/marcelo/linux-2.4/drivers/char/keyboard.c
 //http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
@@ -113,34 +114,86 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 }
 //switch to new terminal specified, return 1 on success, 0 on failure
 int32_t terminal_switch(int newterminalindex){
+	cli();
 	//there are only 3 possible terminals: 0, 1, 2
 	if(newterminalindex < 0 || newterminalindex > 2){
-		return -1;
+		return 0;
 	}
 	//save screen positions
 	terminal_screenx[current_terminal] = screen_x;
 	terminal_screeny[current_terminal] = screen_y;
+	
+	//save task info
+	//need to save esp0 into somewhere - still need to find out where
+	curr_task[current_terminal]->registers.esp0 = tss.esp0;
+	//save registers for old task
+	asm volatile(
+		"pushl %%eax \n\
+		pushl %%ebx \n\
+		pushl %%ecx \n\
+		pushl %%edx \n\
+		pushl %%esi \n\
+		pushl %%edi \n\
+		pushfl \n\
+		movl %%cr3, %%eax \n\
+		movl %%eax, %0 \n\
+		movl %%ebp, %1 \n\
+		movl %%esp, %2 \n\
+		leal GETEIP, %%eax \n\
+		movl %%eax, %3 \n\
+		"
+		: "=g"(curr_task[current_terminal]->registers.cr3), "=g"(curr_task[current_terminal]->registers.ebp), "=g"(curr_task[current_terminal]->registers.esp), "=g"(curr_task[current_terminal]->registers.eip)
+		:
+		: "eax"
+	);
+	//output, input, clobbered registers
+
 	//get page address, first video page is at 132MB, each new page is 4kb later
 	uint32_t* temppage = get_terminal_back_page(current_terminal);
 	//copy video memory into backing page
 	memcpy(temppage, (uint32_t *) VIDEO, FOURKB);
 	uint32_t* newpage = get_terminal_back_page(newterminalindex);
 
-	//copy next terminals stuff to video memory
-	memcpy((uint8_t *) VIDEO, newpage, FOURKB);
-
-
-
-	//still need to update current terminal
-
 	current_terminal = newterminalindex;
+
+	//check if task is running, else start new shell
+	if(!pid_used[current_terminal][0]){
+		sti();
+		clear();
+		send_eoi(KEYBOARD_IRQ);
+		sys_execute((uint8_t*) "shell", 0, 0);
+	}
+	//copy next terminals stuff to video memory, only call if other task exists
+	memcpy((uint8_t *) VIDEO, newpage, FOURKB);
 
 	screen_x = terminal_screenx[current_terminal]; //current_terminal will have been updated in terminal switch
 	screen_y = terminal_screeny[current_terminal];
 
 	update_cursor(screen_x, screen_y);
 
-	return 0;
+	//restore stack
+	tss.esp0 = curr_task[current_terminal]->registers.esp0;
+	asm volatile(
+		"movl %0, %%cr3 \n\
+		movl %1, %%ebp \n\
+		movl %2, %%esp \n\
+		popfl \n\
+		popl %%edi \n\
+		popl %%esi \n\
+		popl %%edx \n\
+		popl %%ecx \n\
+		popl %%ebx \n\
+		popl %%eax \n\
+		pushl %3 \n\
+		"
+		:
+		: "r"(curr_task[current_terminal]->registers.cr3), "r"(curr_task[current_terminal]->registers.ebp), "r"(curr_task[current_terminal]->registers.esp), "g"(curr_task[current_terminal]->registers.eip)
+	);
+	sti();
+	//these 2 things let us get eip stuff 
+	asm volatile("ret");
+	asm volatile("GETEIP:");
+	return 1;
 }
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
