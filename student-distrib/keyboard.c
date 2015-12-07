@@ -122,7 +122,7 @@ int32_t terminal_switch(int newterminalindex){
 	//save screen positions
 	terminal_screenx[current_terminal] = screen_x;
 	terminal_screeny[current_terminal] = screen_y;
-	
+
 	//save task info
 	//need to save esp0 into somewhere - still need to find out where
 	curr_task[current_terminal]->registers.esp0 = tss.esp0;
@@ -163,7 +163,6 @@ int32_t terminal_switch(int newterminalindex){
 		send_eoi(KEYBOARD_IRQ);
 		screen_x = 0;
 		screen_y = 0;
-		update_cursor;
 		sys_execute((uint8_t*) "shell", 0, 0);
 	}
 	//copy next terminals stuff to video memory, only call if other task exists
@@ -193,8 +192,9 @@ int32_t terminal_switch(int newterminalindex){
 		: "r"(curr_task[current_terminal]->registers.cr3), "r"(curr_task[current_terminal]->registers.ebp), "r"(curr_task[current_terminal]->registers.esp), "g"(curr_task[current_terminal]->registers.eip)
 	);
 	sti();
-	//these 2 things let us get eip stuff 
-	asm volatile("ret");
+	//these 2 things let us get eip stuff
+	asm volatile("leave \n\
+								ret");
 	asm volatile("GETEIP:");
 	return 1;
 }
