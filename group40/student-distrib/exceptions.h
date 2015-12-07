@@ -2,14 +2,16 @@
 #ifndef _EXCEPTIONS_H
 #define _EXCEPTIONS_H
 
+#include "types.h"
+#include "lib.h"
+#include "x86_desc.h"
+#include "paging.h"
+#include "fs.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 #define EIGHT_KB 0x2000
 #define PCB_ADDR_BASE 0x00800000 		//PCB address for the first task -> bottom of the task 1's kernel stack
-// #define PCB_ADDR1 (PCB_ADDR0 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-// #define PCB_ADDR2 (PCB_ADDR1 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-// #define PCB_ADDR3 (PCB_ADDR2 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-// #define PCB_ADDR4 (PCB_ADDR3 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
-// #define PCB_ADDR5 (PCB_ADDR4 - EIGHT_KB )	//PCB address for the second task -> bottom of the task 2's kernel stack
 #define KEYBOARD_IDT 33 			//Keyboard IDT value
 #define RTC_IDT 40 					//RTC IDT value
 #define SYSTEM_CALL_IDT 128 		//System Call IDT value
@@ -47,15 +49,6 @@
 #define VIRT_VID_INDEX 33 //index in page directory for 132MB
 #define MAX_TERMINALS 3
 
-
-
-#include "types.h"
-#include "lib.h"
-#include "x86_desc.h"
-#include "paging.h"
-#include "fs.h"
-#include "rtc.h"
-#include "keyboard.h"
 
 typedef struct operations_table_t {
 	int32_t (*read)(int32_t fd, uint8_t* buf, int32_t length);
