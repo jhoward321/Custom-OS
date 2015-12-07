@@ -68,6 +68,13 @@ kb_flags_t keyboard_status; //flags for shift, caps lock, etc
 
 //true if want to clear keyboard buffer, false if want to clear out buffer
 //true is 1, false is 0
+
+/*
+* void clear_buffer(int clear_keyboard)
+*   Inputs: int clear_keyboard = true if want to clear keyboard buffer, false if want to clear out buffer
+*   Return Value: none
+*	Function: clears keyboard buffer, or clears out buffer, depending on the input
+*/
 void clear_buffer(int clear_keyboard){
 	int i;
 	cli();
@@ -85,6 +92,12 @@ void clear_buffer(int clear_keyboard){
 	sti();
 }
 
+/*
+* void clear_screen(void)
+*   Inputs: none
+*   Return Value: none
+*	Function: clears screen, updates cursor position to the start, clears keyboard buffer
+*/
 void clear_screen(void){
 	clear();
 	screen_x = 0;
@@ -92,8 +105,17 @@ void clear_screen(void){
 	update_cursor(screen_x, screen_y);
 	clear_buffer(1);
 }
-//read data from keyboard, return number of bytes read, read from terminanted line (enter)
-//calling terminal read should give me a clear buffer
+
+
+/*
+* int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: length of number of characters read
+*	Function: read data from keyboard, return number of bytes read, read from terminanted line (enter)
+* 	calling terminal read should give a clear buffer
+*/
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 	if(buf == NULL || length < 0)
 		return -1;
@@ -113,7 +135,12 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t length){
 	return length < MAXBUFLEN ? length:MAXBUFLEN;
 }
 
-//switch to new terminal specified, return 1 on success, 0 on failure
+/*
+* int32_t terminal_switch(int newterminalindex)
+*   Inputs: int newterminalindex = index of new terminal to be changed to
+*   Return Value: return 1 on success, 0 on failure
+*	Function: switch to new terminal specified
+*/
 int32_t terminal_switch(int newterminalindex){
 	cli();
 	//there are only 3 possible terminals: 0, 1, 2
@@ -173,7 +200,7 @@ int32_t terminal_switch(int newterminalindex){
 	//check if task is running, else start new shell
 	if(!pid_used[current_terminal][0]){
 		clear();
-		// sti(); 								<<<<<<<<<<<<+===================================== CHECK IF THIS IS NEEDED !!!!!!!!!!!!!!!!!!!!!!!!!!! ========================
+		sti(); 
 		send_eoi(KEYBOARD_IRQ);
 		screen_x = 0;
 		screen_y = 0;
@@ -220,6 +247,15 @@ int32_t terminal_switch(int newterminalindex){
 
 
 //write data to terminal, display immediately, return number of bytes written or -1 on failure
+
+/*
+* int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: return number of bytes written on success, -1 on failure
+*	Function: write data to terminal, display immediately
+*/
 int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 
 	int byteswritten = 0;
@@ -237,17 +273,42 @@ int32_t terminal_write(int32_t fd, uint8_t* buf, int32_t length){
 	return byteswritten;
 }
 
-//shouldn't ever get called but needs to exist... returns 0
+/*
+* int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: none
+*/
 int32_t terminal_open(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
-//same as terminal_open
+
+/*
+* int32_t terminal_close(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: none
+*/
 int32_t terminal_close(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
 
+
 //http://wiki.osdev.org/Text_Mode_Cursor
 //should only call when a line/string is complete
+
+
+/*
+* void update_cursor(int x, int y);
+*   Inputs: int x = x coordinate
+* 		int y = y coordinate
+*   Return Value: none
+*	Function: update the cursor position in screen 
+*/
 void update_cursor(int x, int y){
 	unsigned short position = (y * 80) + x;
 	//cursor LOW port to vga index register
@@ -258,7 +319,12 @@ void update_cursor(int x, int y){
 	outb((unsigned char)((position >> 8) & 0xFF), VGA2);
 }
 
-
+/*
+* void keyboard_init(void);
+*   Inputs: none
+*   Return Value: none
+*	Function: initialize keyboard and enable the keyboard interrupt
+*/
 void keyboard_init(void){
 	keyboard_status.ctrl = 0;
 	keyboard_status.shift = 0;
@@ -276,19 +342,22 @@ void keyboard_init(void){
 	}
 	enable_irq(KEYBOARD_IRQ); //enable keyboard interrupts - may need more here but it's a starting point
 	//https://www.win.tue.nl/~aeb/linux/kbd/scancodes-11.html#inputport
-	//may need to enable keyboard but enabling clock line and clearing bit 4 of the command byte
-	//will test interrupt handler first to see if this is necessary
 
 }
 
+
+
+//referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
 //https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
 //http://www.asciitable.com/
 
 
-//for checkpoint 1 keyboard handler must echo correct character to screen, doesnt matter where it appears
-//referenced http://www.electro.fisica.unlp.edu.ar/temas/lkmpg/node25.html
-
-//handler fills the keyboard buffer and then prints it to terminal
+/*
+* void keyboard_handler(void);
+*   Inputs: none
+*   Return Value: none
+*	Function: handler fills the keyboard buffer and then prints it to terminal
+*/
 void keyboard_handler(void){
 	uint8_t scancode, keycode;
 	if(inb(KB_STATUS) & KB_STATUS_MASK){
@@ -363,16 +432,12 @@ void keyboard_handler(void){
 				}
 				break;
 
-			//still need enter and backspace
 			//process scancode and add correct character to buffer
 			default:
 				if(!(scancode & KB_PRESS_MASK)){
 
 					//ctl+L clears screen
 					if(keyboard_status.ctrl && scancode == L){
-						//call clear screen
-						//clear_screen();
-						//clear_buffer(1);
 						scroll_to_top();	//moves current line and lower up to the top of the terminal
 						update_cursor(screen_x, screen_y);
 						update_attrib();
@@ -408,18 +473,6 @@ void keyboard_handler(void){
 					//switch terminal case, F2 is 3C, F1 is 3B, alt f2 is 69? alt f1 is 68 - not sure if want these
 					else if(keyboard_status.alt && scancode == F1){
 						terminal_switch(0);
-						//save screen positions
-						//terminal_screenx[current_terminal] = screen_x;
-						//terminal_screeny[current_terminal] = screen_y;
-
-						//call terminal switching function - still need to write
-
-						//can either get new screen position here or in terminal switch
-						//would be something like this:
-						//screen_x = terminal_screenx[current_terminal]; //current_terminal will have been updated in terminal switch
-						//screen_y = terminal_screeny[current_terminal];
-
-						//update_cursor(screen_x, screen_y);
 
 						break;
 					}

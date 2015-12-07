@@ -4,7 +4,14 @@ boot_block_t* boot_block;
 
 uint32_t dir_index = 0; //file directory index
 
-//search the file system for
+/*
+* int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
+*   Inputs: const uint8_t* fname = file name
+*			dentry_t* dentry = directory entry pointer
+*   Return Value: 0 on success, -1 on failure
+*	Function: find the directory entry in the file system specified by fname,
+* 			set it to 'dentry'.
+*/
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
 	if(fname == NULL)
@@ -33,7 +40,13 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 	return -1;
 }
 
-
+/*
+* int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
+*   Inputs: uint32_t index = dir entry index number
+*			dentry_t* dentry = directory entry pointer
+*   Return Value: 0 on success, -1 on failure
+*	Function: set dentry to the directory entry in the boot block at index
+*/
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 	if(index > boot_block->total_dirs || index < 0 || dentry == NULL)
 		return -1;
@@ -42,7 +55,16 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 }
 
 
-//copy data from a file from at offset, of length bytes, and store in buf
+/*
+* int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
+*   Inputs: uint32_t inode = index node
+*		uint32_t offset = offset into file
+* 		uint8_t* buf = output buffer
+* 		uint32_t length = desired length to be read
+*   Return Value: number of bytes read on success, -1 on failure
+*	Function: read 'length' number of bytes from file given in inode number 
+* (starting offset bytes into the file), and store it in buffer
+*/
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
 	if(inode > boot_block->total_inodes || inode < 0 || buf == NULL)
 		return -1;
@@ -56,23 +78,18 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 		return -1;
 	}
 
-	//printf("READ DATA:\n\n");
 
 	//address of the first data block
 	uint32_t* data_block_0_address = (uint32_t*)((uint32_t)boot_block + (boot_block->total_inodes + 1) * BYTES_PER_BLOCK);
-	//printf("Data block base address = %d\n",data_block_0_address);
 
 	//address of current data block number to be read (list of data block numbers are stored in the inode)
 	uint32_t* curr_data_block_index_addr = (uint32_t*)((uint32_t)curr_inode_address + (offset/BYTES_PER_BLOCK)*4 + sizeof(uint32_t)); 	// 4 = sizeof(int)
 	
-	//printf("Current data block index address = %d\n", curr_data_block_index_addr);
 	//current data block number to be read (stored in the inode)
 	uint32_t curr_data_block_index = *curr_data_block_index_addr;
-	//printf("Current data block index = %d\n", curr_data_block_index);
 
 	//address of the current data block to be read
 	uint32_t* curr_data_block_address = (uint32_t*)((uint32_t)data_block_0_address + (curr_data_block_index * BYTES_PER_BLOCK));
-	//printf("Current data block address = %d\n", curr_data_block_address);
 
 	uint32_t read_count = 0; 				//number of bytes read thus far
 	uint32_t byte_position = 0; 			//byte position into the file
@@ -98,7 +115,6 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 		//end of block reached? : read from next block
 		if(byte_position % BYTES_PER_BLOCK == 0){
 
-			//VVVVV-----MAKE SURE THIS INCREMENTS BY THE APPROPRIATE AMOUNT
 			curr_data_block_index_addr++; 					//address points to the next data block index in inode
 			curr_data_block_index = *curr_data_block_index_addr;	//get the next data block index
 			//formula for getting the current data address is the same
@@ -110,10 +126,12 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	//if EOF not reached, return the number of bytes read
 	return read_count;
 }
-
-
-
-//returns the given file length represented by the inode (all calculations are copied from the above read_data function)
+/*
+* uint32_t read_file_length(uint32_t inode);
+*   Inputs: uint32_t inode = index node
+*   Return Value: length of file given in inode
+*	Function: returns the given file length represented by the inode 
+*/
 uint32_t read_file_length(uint32_t inode){
 	return *((uint32_t*)((uint32_t)boot_block + BYTES_PER_BLOCK * (inode + 1)));
 }
@@ -123,6 +141,15 @@ uint32_t read_file_length(uint32_t inode){
 
 // ============FILE OPERATIONS==============
 
+/*
+* int32_t read_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: length of file given in inode
+*	Function: read 'length' number of bytes from file given in the file in current pcb
+* located at its fd index in its file array (starting offset bytes into the file), and store it in buffer
+*/
 int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 
 	uint32_t curr_inode_number = curr_task[current_terminal]->file_array[fd].inode_number;
@@ -137,16 +164,40 @@ int32_t read_file(int32_t fd, uint8_t* buf, int32_t length){
 	return read_amount;
 }
 
+/*
+* int32_t write_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: -1
+*	Function: none
+*/
 int32_t write_file(int32_t fd, uint8_t* buf, int32_t length){
 	return -1; //write data always fails, read only
 }
 
+/*
+* int32_t open_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: set the flag of the file in fd to used and set its file position to 0
+*/
 int32_t open_file(int32_t fd, uint8_t* buf, int32_t length){
 	curr_task[current_terminal]->file_array[fd].file_position = 0;
 	curr_task[current_terminal]->file_array[fd].flags = USED;
 	return 0;
 }
 
+/*
+* int32_t close_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: set the flag of the file in fd to free
+*/
 int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
 	curr_task[current_terminal]->file_array[fd].flags = FREE;
 	return 0;
@@ -156,6 +207,14 @@ int32_t close_file(int32_t fd, uint8_t* buf, int32_t length){
 
 // ============DIR OPERATIONS==============
 
+/*
+* int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: number of files read in success, 0 in failure
+*	Function: set the flag of the file in fd to free
+*/
 int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	dentry_t temp;
@@ -179,10 +238,26 @@ int32_t read_dir(int32_t fd, uint8_t* buf, int32_t length){
 	return i; //i is same as doing strlen(buf) but we already have it calculated
 }
 
+/*
+* int32_t write_dir(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: -1
+*	Function: none
+*/
 int32_t write_dir(int32_t fd, uint8_t* buf, int32_t length){
 	return -1;
 }
 
+/*
+* int32_t open_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: set the flag of the directory in fd to used and set its file position to 0
+*/
 int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length){
 
 	curr_task[current_terminal]->file_array[fd].inode_number = 0;
@@ -191,6 +266,14 @@ int32_t open_dir(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }
 
+/*
+* int32_t open_file(int32_t fd, uint8_t* buf, int32_t length)
+*   Inputs: int32_t fd = file descriptor
+*		uint8_t* buf = buffer
+*		int32_t length = length
+*   Return Value: 0
+*	Function: none
+*/
 int32_t close_dir(int32_t fd, uint8_t* buf, int32_t length){
 	return 0;
 }

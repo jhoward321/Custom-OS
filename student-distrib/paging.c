@@ -36,7 +36,13 @@ uint32_t first_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 uint32_t video_page_table[NUM_INDEXES] __attribute__((aligned(ALIGN_SIZE)));
 
 
-//enables paging
+
+/*
+* void paging init();
+*   Inputs: none
+*   Return Value: none
+*	Function: enables paging
+*/
 void paging_init(){
 
 	//initialize the directory to empty
