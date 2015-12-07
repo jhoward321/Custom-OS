@@ -161,6 +161,9 @@ int32_t terminal_switch(int newterminalindex){
 		sti();
 		clear();
 		send_eoi(KEYBOARD_IRQ);
+		screen_x = 0;
+		screen_y = 0;
+		update_cursor;
 		sys_execute((uint8_t*) "shell", 0, 0);
 	}
 	//copy next terminals stuff to video memory, only call if other task exists
