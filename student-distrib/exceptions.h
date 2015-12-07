@@ -72,10 +72,15 @@ typedef struct file_descriptor_t{
 	uint32_t flags;
 } file_descriptor_t;
 
+typedef struct task_stack_t{
+	uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags, cr3, esp0;
+} task_stack_t;
+
 typedef struct pcb_t {
 	file_descriptor_t file_array[8];
 	uint32_t esp; //stores parents esp/ebp which is used in halt
 	uint32_t ebp;
+	task_stack_t registers;
 	struct pcb_t* parent_task;
 	struct pcb_t* child_task;
 	uint32_t process_id;
@@ -84,6 +89,7 @@ typedef struct pcb_t {
 } pcb_t;
 
 extern pcb_t* curr_task[MAX_TERMINALS];
+extern uint32_t pid_used[MAX_TERMINALS][MAX_PCBS];
 //extern int current_terminal;
 
 void set_pcbs();
