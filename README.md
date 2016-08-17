@@ -1,8 +1,9 @@
 # ECE 391 MP3 - Operating System
 
 This repository was our final project for ECE 391 during the Fall 2015 semester at the University of Illinois. 
+Project requirements can be found in the [included pdf file](ProjectRequirements.pdf).
 
-ECE391 MP3 - Package contents
+## Package contents
 ================================
 
 createfs
