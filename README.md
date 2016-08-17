@@ -4,7 +4,6 @@ This repository was our final project for ECE 391 during the Fall 2015 semester 
 Project requirements can be found in the [included pdf file](ProjectRequirements.pdf).
 
 ## Package contents
-================================
 
 createfs
     This program takes a flat source directory (i.e. no subdirectories
